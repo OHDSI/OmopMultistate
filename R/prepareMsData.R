@@ -1,18 +1,33 @@
 
+#' Title
+#'
+#' @param cohort
+#' @param tmat
+#' @param eventDate
+#' @param censorDate
+#' @param stateHierarchy
+#' @param stateStep
+#' @param keepExtraColumns
+#'
+#' @returns
+#' @export
+#'
+#' @examples
 prepareMultiStateData <- function(cohort,
                                   tmat,
                                   eventDate = "cohort_start_date",
-                                  indexCohortId = NULL,
                                   censorDate = NULL,
-                                  stateHeriarchy = character(),
+                                  stateHierarchy = character(),
                                   stateStep = 0.01,
                                   keepExtraColumns = TRUE) {
   # initial validations
   cohort <- omopgenerics::validateCohortArgument(cohort)
+  name <- omopgenerics::validateNameArgument(name = name, cdm = cdm, null = TRUE)
   omopgenerics::validateColumn(eventDate, cohort, type = "date")
-  indexCohortId <- omopgenerics::validateCohortIdArgument({{indexCohortId}}, cohort)
   omopgenerics::validateColumn(censorDate, cohort, type = "date", null = TRUE)
   omopgenerics::assertLogical(keepExtraColumns)
+
+  cdm <- omopgenerics::cdmReference(cohort)
 
   # get transitions
   transitions <- tmat |>
@@ -22,10 +37,10 @@ prepareMultiStateData <- function(cohort,
     dplyr::filter(!is.na(.data$trans))
 
   # get not final states
-  notFinal <- unique(transitions$from)
+  initialStates <- unique(transitions$from)
 
   # states
-  states <- unique(c(notFinal, unique(transitions$to)))
+  states <- unique(c(initialStates, unique(transitions$to)))
 
   # check names
   set <- omopgenerics::settings(cohort)
@@ -34,8 +49,15 @@ prepareMultiStateData <- function(cohort,
     cli::cli_abort(c(x = "The following states are not identified in the cohort: {.var {notPresent}}."))
   }
 
-  # initial states
-  initialStates <- set$cohort_name[set$cohort_definition_id %in% indexCohortId]
+  # check states hierarchy
+  omopgenerics::assertChoice(stateHierarchy, choices = states)
+  omopgenerics::assertNumeric(stateStep, length = 1)
+  stateHierarchy <- dplyr::tibble(
+    state = stateHierarchy,
+    step = stateStep * seq_along(stateHierarchy)
+  ) |>
+    dplyr::full_join(dplyr::tibble(state = states), by = "state") |>
+    dplyr::mutate(step = dplyr::coalesce(.data$step, 0))
 
   # prepare censor date
   cohort <- cohort |>
@@ -60,7 +82,7 @@ prepareMultiStateData <- function(cohort,
       "date_event" = dplyr::all_of(indexDate),
       "censor_date"
     ) |>
-    dplyr:collect()
+    dplyr::collect()
 
   # initialise: each subject starts at their first state
   current <- states |>
@@ -68,18 +90,33 @@ prepareMultiStateData <- function(cohort,
     dplyr::group_by(.data$subject_id) |>
     dplyr::filter(.data$date_event == min(.data$date_event, na.rm = TRUE)) |>
     dplyr::ungroup() |>
-    dplyr::select("subject_id", "state", "date_event")
+    dplyr::select("subject_id", "state", "date_event") |>
+    computeNull(cnm)
 
   # check individuals with more than one initial state
-  multiple <- current |>
-
+  checkMultiple(current)
 
   # keep only records after initial state
+  ns <- omopgenerics::numberRecords(states)
+  states <- states |>
+    dplyr::left_join(
+      current |>
+        dplyr::select("subject_id", "time_0" = "date_event"),
+      by = "subject_id"
+    ) |>
+    dplyr::filter(.data$time_0 <= .data$date_event) |>
+    computeNull(snm)
+  nn <- omopgenerics::numberRecords(states)
+  nd <- nn - ns
+  if (nd > 0) {
+    cli::cli_inform(c("!" = "There are {nd} states that occur before first entry and will never be reached."))
+  }
 
   msdata <- list()
   i <- 1L
 
-  while (nrow(current) > 0) {
+  while (omopgenerics::numberRecords(current) > 0) {
+
     # for each subject in current state, find the possible transitions
     possibleTransitions <- current |>
       dplyr::rename(from = "state") |>
@@ -115,19 +152,29 @@ prepareMultiStateData <- function(cohort,
           .default = 0
         )
       ) |>
-      dplyr::select("subject_id", "from", "to", "trans", "Tstart", "Tstop",
-                    "status", "censor_time")
+      dplyr::select(
+        "subject_id", "from", "to", "trans", "Tstart", "Tstop", "status",
+        "censor_time"
+      )
 
     # active states after transition
     current <- activeTransitons |>
-      dplyr::filter(.data$status == 1, .data$to %in% .env$notFinal) |>
+      dplyr::filter(.data$status == 1, .data$to %in% .env$initialStates) |>
       dplyr::select("subject_id", state = "to", Tstart = "Tstop", "censor_time")
 
     msdata[[i]] <- activeTransitons
     i <- i + 1L
   }
 
-  dplyr::bind_rows(msdata)
+  # bind all ms data
+  msdata <- dplyr::bind_rows(msdata)
+
+  # warn about not reached states
+  probtrans
+  attr(msres, "trans") <- trans
+  class(msres) <- c("msdata", "data.frame")
+
+  return(msdata)
 }
 
 checkMultiple <- function(states, iteration = 0) {
@@ -150,7 +197,7 @@ checkMultiple <- function(states, iteration = 0) {
       end <- paste0(" after transition ", iteration)
     }
     message <- paste0("Individuals have multiple ", ini, "states", end, ".")
-    cli::cli_abort(c(x = message, i = "Individuals are not allowed to be in more than one state at the same time."))
+    cli::cli_abort(c(x = message, i = "Individuals are not allowed to be in more than one state at the same time. Use the `stateHeriarchy`"))
   }
   invisible()
 }
