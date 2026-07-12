@@ -8,3 +8,11 @@ summariseMultiStateProbabilities <- function(cohort,
                                              stateStep = 0.01) {
 
 }
+
+plotMultiStateProbabilities <- function() {
+
+}
+
+tableMultiStateProbabilities <- function() {
+
+}
