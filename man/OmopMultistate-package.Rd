@@ -14,11 +14,12 @@ What the package does (one paragraph).
 Useful links:
 \itemize{
   \item \url{https://oxford-pharmacoepi.github.io/OmopMultistate/}
+  \item Report bugs at \url{https://github.com/oxford-pharmacoepi/OmopMultistate/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com}
+\strong{Maintainer}: Martí Català \email{marti.catalasabate@ndorms.ox.ac.uk} (\href{https://orcid.org/0000-0003-3308-9905}{ORCID})
 
 }
 \keyword{internal}
