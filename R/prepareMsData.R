@@ -74,6 +74,8 @@ prepareMultiStateData <- function(cohort,
       )
   }
 
+  # add time to censor date
+
   # get states
   states <- cohort |>
     dplyr::select(
