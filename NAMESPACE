@@ -3,3 +3,5 @@
 export(prepareMultiStateData)
 export(transMat)
 importFrom(mstate,transMat)
+importFrom(rlang,.data)
+importFrom(rlang,.env)

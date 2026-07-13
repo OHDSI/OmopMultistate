@@ -32,7 +32,7 @@ prepareMultiStateData <- function(cohort,
   # get transitions
   transitions <- tmat |>
     as.data.frame() |>
-    tibble::rownames_to_column("from") |>
+    dplyr::mutate(from = rownames(tmat)) |>
     tidyr::pivot_longer(!"from", names_to = "to", values_to = "trans") |>
     dplyr::filter(!is.na(.data$trans))
 
