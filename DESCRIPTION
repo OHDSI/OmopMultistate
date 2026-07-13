@@ -20,3 +20,7 @@ Imports:
     tidyr
 URL: https://oxford-pharmacoepi.github.io/OmopMultistate/
 BugReports: https://github.com/oxford-pharmacoepi/OmopMultistate/issues
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Config/testthat/parallel: true
