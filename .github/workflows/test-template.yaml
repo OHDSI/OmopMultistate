@@ -1,0 +1,45 @@
+name: Reusable test workflow
+
+on:
+  workflow_call:
+    inputs:
+      DB_TO_TEST:
+        description: Test database backend
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  run-tests:
+    name: ${{ inputs.DB_TO_TEST }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      DB_TO_TEST: ${{ inputs.DB_TO_TEST }}
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::devtools
+            any::CDMConnector
+            any::duckdb
+            any::omock
+          needs: check
+
+      - name: Run tests with source
+        run: devtools::test(stop_on_failure = TRUE)
+        shell: Rscript {0}
