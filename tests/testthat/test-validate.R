@@ -1,4 +1,4 @@
-test_that("", {
+test_that("validateTrans behaviour", {
   # validateTrans accepts a valid transition matrix
   trans <- mstate::transMat(
     list(c(2, 3), c(3), c()),
