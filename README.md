@@ -12,7 +12,35 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 coverage](https://codecov.io/gh/oxford-pharmacoepi/OmopMultistate/graph/badge.svg)](https://app.codecov.io/gh/oxford-pharmacoepi/OmopMultistate)
 <!-- badges: end -->
 
-The goal of OmopMultistate is to …
+**OmopMultistate** estimates how individuals move between clinically
+meaningful states over time using cohort records from the OMOP Common
+Data Model. Each state is represented by a cohort definition, while a
+transition matrix declares which movements between states are possible.
+
+The package provides a workflow to:
+
+- prepare an OMOP `cohort_table` in the long format used by
+  [mstate](https://hputter.github.io/mstate/);
+- estimate state occupation probabilities overall or for specific
+  initial states;
+- repeat the analysis across user-defined strata; and
+- return results as a standard `summarised_result` object and visualise
+  them over time.
+
+## Ecosystem
+
+*OmopMultistate* is part of the ecosystem of packages defined by
+[omopgenerics](https://darwin-eu.github.io/omopgenerics/). For more
+details on the ecosystem you can read the [Tidy R programming with the
+OMOP Common Data
+Model](https://ohdsi.github.io/Tidy-R-programming-with-OMOP/) book.
+
+## Tested sources
+
+| Source | Driver | CDM reference | Status |
+|----|----|----|----|
+| Local R data frame | N/A | `omopgenerics::cdmFromTables()` | ![](https://img.shields.io/github/actions/workflow/status/oxford-pharmacoepi/OmopMultistate/test-weekly.yaml?branch=main&job=local-omopgenerics) |
+| In-memory DuckDB database | duckdb | `CDMConnector::cdmFromCon()` | ![](https://img.shields.io/github/actions/workflow/status/oxford-pharmacoepi/OmopMultistate/test-weekly.yaml?branch=main&job=duckdb-CDMConnector) |
 
 ## Installation
 
@@ -26,33 +54,82 @@ pak::pak("oxford-pharmacoepi/OmopMultistate")
 
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+The following example uses a small mock OMOP CDM containing three
+states: `treated`, `untreated`, and the absorbing state `death`.
 
 ``` r
 library(OmopMultistate)
-## basic example code
+
+cdm <- omock::mockCdmFromTables(
+  tables = list(
+    cohort = dplyr::tibble(
+      cohort_definition_id = c(1L, 1L, 1L, 2L, 2L, 3L),
+      subject_id = 1L,
+      cohort_start_date = as.Date("2020-01-01") +
+        c(0L, 100L, 120L, 50L, 110L, 150L),
+      cohort_end_date = cohort_start_date
+    )
+  )
+)
+
+cdm$cohort <- CohortConstructor::renameCohort(
+  cohort = cdm$cohort,
+  newCohortName = c("treated", "untreated", "death")
+)
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
+Define the allowed transitions. Here, individuals can move between
+treatment states or from either treatment state to death; no transitions
+out of death are allowed.
 
 ``` r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
+trans <- transMat(
+  x = list(c(2, 3), c(1, 3), c()),
+  names = c("treated", "untreated", "death")
+)
+
+trans
+#>            to
+#> from        treated untreated death
+#>   treated        NA         1     2
+#>   untreated       3        NA     4
+#>   death          NA        NA    NA
 ```
 
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date. `devtools::build_readme()` is handy for this.
+Estimate state occupation probabilities over the observed follow-up:
 
-You can also embed plots, for example:
+``` r
+result <- summariseMultistateProbabilities(
+  cohort = cdm$cohort,
+  trans = trans
+)
 
-<img src="man/figures/README-pressure-1.png" alt="" width="100%" />
+result |>
+  omopgenerics::tidy() |>
+  dplyr::select(
+    "initial_state", "variable_name", "variable_level", "probability"
+  ) |>
+  dplyr::slice_head(n = 10)
+#> # A tibble: 10 × 4
+#>    initial_state variable_name  variable_level probability
+#>    <chr>         <chr>          <chr>                <dbl>
+#>  1 overall       prob_death     0                        0
+#>  2 overall       prob_treated   0                        1
+#>  3 overall       prob_untreated 0                        0
+#>  4 overall       prob_death     50                       0
+#>  5 overall       prob_treated   50                       0
+#>  6 overall       prob_untreated 50                       1
+#>  7 overall       prob_death     100                      0
+#>  8 overall       prob_treated   100                      1
+#>  9 overall       prob_untreated 100                      0
+#> 10 overall       prob_death     110                      0
+```
 
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub and CRAN.
+The result can be displayed as stacked state occupation probabilities
+over time:
+
+``` r
+plotMultistateProbabilities(result)
+```
+
+<img src="man/figures/README-plot-probabilities-1.png" alt="" width="100%" />
