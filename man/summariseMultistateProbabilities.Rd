@@ -2,7 +2,7 @@
 % Please edit documentation in R/summariseMultistateProbabilities.R
 \name{summariseMultistateProbabilities}
 \alias{summariseMultistateProbabilities}
-\title{Title}
+\title{Summarise Multi-State Occupation Probabilities over time}
 \usage{
 summariseMultistateProbabilities(
   cohort,
@@ -55,5 +55,5 @@ A \verb{<summarised_result>} object with result_type =
 probabilities.
 }
 \description{
-Title
+Summarise Multi-State Occupation Probabilities over time
 }

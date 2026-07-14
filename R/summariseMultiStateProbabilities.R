@@ -1,5 +1,5 @@
 
-#' Title
+#' Summarise Multi-State Occupation Probabilities over time
 #'
 #' @inheritParams cohortDoc
 #' @inheritParams transDoc
@@ -161,7 +161,8 @@ pkgVersion <- function() {
   as.character(utils::packageVersion(pkg = pkgName()))
 }
 
-#' Title
+#' Plot Multi-State Occupation Probabilities extracted by
+#' `summariseMultistateProbabilities()`
 #'
 #' @inheritParams resultDoc
 #' @inheritParams styleDoc

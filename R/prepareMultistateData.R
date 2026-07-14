@@ -1,5 +1,5 @@
 
-#' Title
+#' Prepare Multi-State Data from an OMOP Cohort Table
 #'
 #' @inheritParams cohortDoc
 #' @inheritParams transDoc

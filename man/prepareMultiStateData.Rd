@@ -2,7 +2,7 @@
 % Please edit documentation in R/prepareMultistateData.R
 \name{prepareMultistateData}
 \alias{prepareMultistateData}
-\title{Title}
+\title{Prepare Multi-State Data from an OMOP Cohort Table}
 \usage{
 prepareMultistateData(
   cohort,
@@ -47,5 +47,5 @@ from \code{cohort} should be retained in the prepared multi-state data.}
 An \code{msdata} object to be used by the \code{mstate} package.
 }
 \description{
-Title
+Prepare Multi-State Data from an OMOP Cohort Table
 }

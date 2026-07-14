@@ -2,7 +2,8 @@
 % Please edit documentation in R/summariseMultistateProbabilities.R
 \name{plotMultistateProbabilities}
 \alias{plotMultistateProbabilities}
-\title{Title}
+\title{Plot Multi-State Occupation Probabilities extracted by
+\code{summariseMultistateProbabilities()}}
 \usage{
 plotMultistateProbabilities(result, style = NULL, timeScale = "days")
 }
@@ -22,5 +23,6 @@ A ggplot2 object with the visualisation of the probabilities over
 time.
 }
 \description{
-Title
+Plot Multi-State Occupation Probabilities extracted by
+\code{summariseMultistateProbabilities()}
 }
