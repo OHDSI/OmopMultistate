@@ -60,14 +60,17 @@ summariseMultistateProbabilities <- function(cohort,
         purrr::map(\(ms) {
           extractProbabilities(ms, trans, followUpDays, start) |>
             dplyr::cross_join(
-              st |>
+              ms |>
                 dplyr::select(dplyr::any_of(st)) |>
                 dplyr::distinct()
             )
         }) |>
         dplyr::bind_rows()
     }) |>
-    dplyr::bind_rows() |>
+    dplyr::bind_rows()
+
+  # format data
+  result <- result |>
     dplyr::mutate(
       cdm_name = omopgenerics::cdmName(cohort),
       result_type = "summarise_multistate_probabilities",
@@ -81,31 +84,73 @@ summariseMultistateProbabilities <- function(cohort,
     omopgenerics::transformToSummarisedResult(
       group = "initial_state",
       strata = unique(unlist(strata)),
-      estimates = "proportion",
+      estimates = "probability",
       settings = c(
         "result_type", "package_name", "package_version", "follow_up_days",
         "cohort_table_name", "state_hierarchy", "state_step"
       )
     )
 
-  # format data
-
-
   return(result)
 }
-startingProbabilities <- function(msData) {
-
+startingProbabilities <- function(msData, trans) {
+  states <- colnames(trans)
+  msData |>
+    dplyr::filter(.data$Tstart == 0) |>
+    dplyr::distinct(.data$subject_id, .data$from) |>
+    dplyr::group_by(.data$from) |>
+    dplyr::summarise(n = as.numeric(dplyr::n()), .groups = "drop") |>
+    dplyr::collect() |>
+    dplyr::right_join(
+      dplyr::tibble(initial_state = states, from = seq_along(states)),
+      by = "from"
+    ) |>
+    dplyr::mutate(
+      n = dplyr::coalesce(.data$n, 0),
+      prob = .data$n / sum(.data$n)
+    ) |>
+    dplyr::select("initial_state", "prob")
 }
 extractProbabilities <- function(x, trans, followUp, start) {
+  states <- colnames(trans)
+
   # cox
-  cox_mod <- survival::coxph(
+  cox <- survival::coxph(
     survival::Surv(Tstart, Tstop, status) ~ survival::strata(trans) + survival::cluster(subject_id),
     data = x
   )
-  msf <- mstate::msfit(cox_mod, trans = trans)
-  pt_list <- mstate::probtrans(msf, predt = 0)
+  msf <- mstate::msfit(cox, trans = trans)
+  probs <- mstate::probtrans(msf, predt = 0)
 
+  # rename
+  rn <- paste0("pstate", seq_along(states)) |>
+    rlang::set_names(paste0("prob_", states))
 
+  # no initial state
+  probStates <- states |>
+    purrr::imap(\(x, i) {
+      probs[[i]] |>
+        dplyr::select(variable_level = "time", dplyr::all_of(rn)) |>
+        dplyr::filter(.data$variable_level <= .env$followUp) |>
+        tidyr::pivot_longer(
+          cols = !"variable_level",
+          names_to = "variable_name",
+          values_to = "probability"
+        ) |>
+        dplyr::mutate(initial_state = .env$x)
+    }) |>
+    dplyr::bind_rows() |>
+    dplyr::mutate(variable_level = as.character(.data$variable_level))
+
+  # initial state
+  probInitial <- probStates |>
+    dplyr::inner_join(start, by = "initial_state") |>
+    dplyr::mutate(probability = .data$probability * .data$prob) |>
+    dplyr::group_by(.data$variable_level, .data$variable_name) |>
+    dplyr::summarise(probability = sum(.data$probability), .groups = "drop") |>
+    dplyr::mutate(initial_state = NA_character_)
+
+  dplyr::union_all(probInitial, probStates)
 }
 pkgName <- function() {
   "OmopMultistate"
