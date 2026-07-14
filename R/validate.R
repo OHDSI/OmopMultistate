@@ -1,4 +1,4 @@
-assertTrans <- function(trans, call = rlang::caller_env()) {
+validateTrans <- function(trans, call = rlang::caller_env()) {
   if (!is.matrix(trans)) {
     cli::cli_abort("{.arg trans} must be a matrix.", call = call)
   }
