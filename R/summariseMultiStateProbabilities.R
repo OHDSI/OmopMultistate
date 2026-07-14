@@ -202,14 +202,51 @@ plotMultistateProbabilities <- function(result,
     xLab <- "Time (days)"
   }
 
+  x <- stepAreaData(x, facet)
+
   ggplot2::ggplot(
     data = x,
-    mapping = ggplot2::aes(x = .data$time, y = .data$probability, fill = .data$state)
+    mapping = ggplot2::aes(
+      x = .data$time,
+      ymin = .data$ymin,
+      ymax = .data$ymax,
+      fill = .data$state
+    )
   ) +
-    ggplot2::geom_area() +
+    ggplot2::geom_ribbon() +
     ggplot2::facet_wrap(facet) +
     visTheme +
     ggplot2::labs(x = xLab, y = "Probability (%)", fill = "") +
     ggplot2::theme(legend.position = "top") +
     ggplot2::scale_y_continuous(labels = scales::percent)
+}
+
+stepAreaData <- function(x, facet = character()) {
+  x <- x |>
+    dplyr::select("state", "time", "probability", dplyr::all_of(facet)) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(facet, "time")))) |>
+    dplyr::arrange(.data$state, .by_group = TRUE) |>
+    dplyr::mutate(
+      ymax = cumsum(.data$probability),
+      ymin = .data$ymax - .data$probability
+    ) |>
+    dplyr::ungroup()
+
+  previous <- x |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(facet, "state")))) |>
+    dplyr::arrange(.data$time, .by_group = TRUE) |>
+    dplyr::mutate(time = dplyr::lead(.data$time)) |>
+    dplyr::filter(!is.na(.data$time)) |>
+    dplyr::ungroup()
+
+  dplyr::bind_rows(
+    dplyr::mutate(previous, .step = 0L),
+    dplyr::mutate(x, .step = 1L)
+  ) |>
+    dplyr::arrange(
+      dplyr::across(dplyr::all_of(c(facet, "state"))),
+      .data$time,
+      .data$.step
+    ) |>
+    dplyr::select(!".step")
 }

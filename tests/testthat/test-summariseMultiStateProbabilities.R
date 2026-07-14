@@ -2,9 +2,9 @@ test_that("summariseMultistateProbabilities", {
   # create test cdm
   cdm <- omock::mockCdmFromTables(tables = list(
     cohort1 = dplyr::tibble(
-      cohort_definition_id = c(1L, 1L, 1L, 2L, 2L, 3L),
-      subject_id = 1L,
-      cohort_start_date = as.Date("2020-01-01") + c(0L, 100L, 120L, 50L, 110L, 150L),
+      cohort_definition_id = c(1L, 1L, 1L, 2L, 2L, 3L, 1L),
+      subject_id = c(rep(1L, 6), 2L),
+      cohort_start_date = as.Date("2020-01-01") + c(0L, 100L, 120L, 50L, 110L, 150L, -400L),
       cohort_end_date = cohort_start_date
     )
   )) |>
