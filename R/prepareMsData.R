@@ -2,7 +2,7 @@
 #' Title
 #'
 #' @param cohort
-#' @param tmat
+#' @param trans
 #' @param eventDate
 #' @param censorDate
 #' @param stateHierarchy
@@ -13,8 +13,8 @@
 #' @export
 #'
 #' @examples
-prepareMultiStateData <- function(cohort,
-                                  tmat,
+prepareMultistateData <- function(cohort,
+                                  trans,
                                   eventDate = "cohort_start_date",
                                   censorDate = NULL,
                                   stateHierarchy = character(),
@@ -173,6 +173,8 @@ prepareMultiStateData <- function(cohort,
 
   # warn about not reached states
   probtrans
+
+
   attr(msres, "trans") <- trans
   class(msres) <- c("msdata", "data.frame")
 
