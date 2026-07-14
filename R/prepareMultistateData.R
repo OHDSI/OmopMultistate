@@ -1,13 +1,13 @@
 
 #' Title
 #'
-#' @param cohort
+#' @inheritParams cohortDoc
 #' @inheritParams transDoc
-#' @param eventDate
-#' @param censorDate
-#' @param stateHierarchy
-#' @param stateStep
-#' @param keepExtraColumns
+#' @inheritParams eventDateDoc
+#' @inheritParams censorDateDoc
+#' @inheritParams stateHierarchyDoc
+#' @inheritParams stateStepDoc
+#' @inheritParams keepExtraColumnsDoc
 #'
 #' @returns
 #' @export

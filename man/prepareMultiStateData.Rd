@@ -15,6 +15,9 @@ prepareMultistateData(
 )
 }
 \arguments{
+\item{cohort}{A \code{cohort_table} object containing one cohort for each state in
+the multi-state model. Cohort names must match the state names in \code{trans}.}
+
 \item{trans}{Transition matrix describing the states and transitions in the
 multi-state model. If S is the number of states in the multi-state model,
 trans should be an S x S matrix, with (i,j)-element a positive integer if a
@@ -23,7 +26,22 @@ particular, all diagonal elements should be NA. The integers indicating the
 possible transitions in the multi-state model should be sequentially
 numbered, 1,...,K, with K the number of transitions.}
 
-\item{keepExtraColumns}{}
+\item{eventDate}{Name of the date column in \code{cohort} that identifies when an
+individual enters a state.}
+
+\item{censorDate}{Name of the date column in \code{cohort} that identifies the end
+of follow-up. If \code{NULL}, the end of each individual's observation period is
+used.}
+
+\item{stateHierarchy}{Character vector of state names in the order used to
+resolve states that occur on the same date. An empty character vector applies
+no hierarchy.}
+
+\item{stateStep}{Numeric increment used to separate states that occur on the
+same date according to \code{stateHierarchy}.}
+
+\item{keepExtraColumns}{Logical value indicating whether additional columns
+from \code{cohort} should be retained in the prepared multi-state data.}
 }
 \description{
 Title

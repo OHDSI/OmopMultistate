@@ -1,14 +1,14 @@
 
 #' Title
 #'
-#' @param cohort
+#' @inheritParams cohortDoc
 #' @inheritParams transDoc
-#' @param strata A different model is fit for each stratification.
-#' @param followUpDays
-#' @param eventDate
-#' @param censorDate
-#' @param stateHierarchy
-#' @param stateStep
+#' @inheritParams strataDoc
+#' @inheritParams followUpDaysDoc
+#' @inheritParams eventDateDoc
+#' @inheritParams censorDateDoc
+#' @inheritParams stateHierarchyDoc
+#' @inheritParams stateStepDoc
 #'
 #' @returns
 #' @export
@@ -163,9 +163,9 @@ pkgVersion <- function() {
 
 #' Title
 #'
-#' @param result
-#' @param style
-#' @param timeScale
+#' @inheritParams resultDoc
+#' @inheritParams styleDoc
+#' @inheritParams timeScaleDoc
 #'
 #' @returns
 #' @export

@@ -7,7 +7,15 @@
 plotMultistateProbabilities(result, style = NULL, timeScale = "days")
 }
 \arguments{
-\item{timeScale}{}
+\item{result}{A \code{summarised_result} object produced by
+\code{\link[=summariseMultistateProbabilities]{summariseMultistateProbabilities()}}.}
+
+\item{style}{Plot style passed to \code{\link[visOmopResults:themeVisOmop]{visOmopResults::themeVisOmop()}}. It can be
+the name of a built-in style, a path to a YAML style file, or \code{NULL} to use
+the default style.}
+
+\item{timeScale}{Character string specifying the time scale of the x-axis:
+either \code{"days"} or \code{"years"}.}
 }
 \description{
 Title
