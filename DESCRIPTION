@@ -25,6 +25,7 @@ Imports:
 URL: https://oxford-pharmacoepi.github.io/OmopMultistate/
 BugReports: https://github.com/oxford-pharmacoepi/OmopMultistate/issues
 Suggests: 
+    CDMConnector,
     CohortConstructor,
     ggplot2,
     omock,
