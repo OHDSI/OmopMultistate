@@ -10,10 +10,12 @@
 #' @inheritParams stateHierarchyDoc
 #' @inheritParams stateStepDoc
 #'
-#' @returns
+#' @returns A `<summarised_result>` object with result_type =
+#' "summarise_multistate_probabilities" that contains the multistate
+#' probabilities.
+#'
 #' @export
 #'
-#' @examples
 summariseMultistateProbabilities <- function(cohort,
                                              trans,
                                              strata = list(),
@@ -39,7 +41,7 @@ summariseMultistateProbabilities <- function(cohort,
   msData <- prepareMultistateData(
     cohort = cohort,
     trans = trans,
-    eventDate = eventData,
+    eventDate = eventDate,
     censorDate = censorDate,
     stateHierarchy = stateHierarchy,
     stateStep = 0.01,
@@ -167,10 +169,11 @@ pkgVersion <- function() {
 #' @inheritParams styleDoc
 #' @inheritParams timeScaleDoc
 #'
-#' @returns
+#' @returns A ggplot2 object with the visualisation of the probabilities over
+#' time.
+#'
 #' @export
 #'
-#' @examples
 plotMultistateProbabilities <- function(result,
                                         style = NULL,
                                         timeScale = "days") {
@@ -209,7 +212,7 @@ plotMultistateProbabilities <- function(result,
 
   ggplot2::ggplot(
     data = x,
-    mapping = ggplot2::aes(x = time, y = probability, fill = state)
+    mapping = ggplot2::aes(x = .data$time, y = .data$probability, fill = .data$state)
   ) +
     ggplot2::geom_area() +
     ggplot2::facet_wrap(facet) +

@@ -49,6 +49,11 @@ no hierarchy.}
 \item{stateStep}{Numeric increment used to separate states that occur on the
 same date according to \code{stateHierarchy}.}
 }
+\value{
+A \verb{<summarised_result>} object with result_type =
+"summarise_multistate_probabilities" that contains the multistate
+probabilities.
+}
 \description{
 Title
 }

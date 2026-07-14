@@ -17,6 +17,10 @@ the default style.}
 \item{timeScale}{Character string specifying the time scale of the x-axis:
 either \code{"days"} or \code{"years"}.}
 }
+\value{
+A ggplot2 object with the visualisation of the probabilities over
+time.
+}
 \description{
 Title
 }

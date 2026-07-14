@@ -43,6 +43,9 @@ same date according to \code{stateHierarchy}.}
 \item{keepExtraColumns}{Logical value indicating whether additional columns
 from \code{cohort} should be retained in the prepared multi-state data.}
 }
+\value{
+An \code{msdata} object to be used by the \code{mstate} package.
+}
 \description{
 Title
 }

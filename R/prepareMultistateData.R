@@ -9,10 +9,10 @@
 #' @inheritParams stateStepDoc
 #' @inheritParams keepExtraColumnsDoc
 #'
-#' @returns
+#' @returns An `msdata` object to be used by the `mstate` package.
+#'
 #' @export
 #'
-#' @examples
 prepareMultistateData <- function(cohort,
                                   trans,
                                   eventDate = "cohort_start_date",
@@ -30,9 +30,9 @@ prepareMultistateData <- function(cohort,
   cdm <- omopgenerics::cdmReference(cohort)
 
   # get transitions
-  transitions <- tmat |>
+  transitions <- trans |>
     as.data.frame() |>
-    dplyr::mutate(from = rownames(tmat)) |>
+    dplyr::mutate(from = rownames(trans)) |>
     tidyr::pivot_longer(!"from", names_to = "to", values_to = "trans") |>
     dplyr::filter(!is.na(.data$trans))
 
@@ -85,7 +85,7 @@ prepareMultistateData <- function(cohort,
     dplyr::select(
       "state" = "cohort_name",
       "subject_id",
-      "date_event" = dplyr::all_of(indexDate),
+      "date_event" = dplyr::all_of(eventDate),
       "censor_date"
     ) |>
     dplyr::collect()
@@ -155,7 +155,7 @@ prepareMultistateData <- function(cohort,
     # find the transition that takes place
     activeTransiton <- possibleTransitions |>
       dplyr::inner_join(
-        xx |>
+        states |>
           dplyr::select("subject_id", Tstop = "time_event", to = "state"),
         by = c("subject_id", "to")
       ) |>
@@ -203,8 +203,6 @@ prepareMultistateData <- function(cohort,
   msdata <- dplyr::bind_rows(msdata)
 
   # warn about not reached states
-  probtrans
-
 
   attr(msres, "trans") <- trans
   class(msres) <- c("msdata", "data.frame")
@@ -217,7 +215,7 @@ reportIndividuals <- function(n, reason) {
   }
 }
 checkMultiple <- function(states, iteration = 0) {
-  multiple <- current |>
+  multiple <- states |>
     dplyr::group_by(.data$subject_id) |>
     dplyr::summarise(
       n_state = dplyr::n_distinct(.data$state),
