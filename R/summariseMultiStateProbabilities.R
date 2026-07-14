@@ -2,7 +2,7 @@
 #' Title
 #'
 #' @param cohort
-#' @param trans
+#' @inheritParams transDoc
 #' @param strata A different model is fit for each stratification.
 #' @param followUpDays
 #' @param eventDate
@@ -47,7 +47,7 @@ summariseMultistateProbabilities <- function(cohort,
   )
 
   # get start probabilities
-  start <- startingProbabilities(msData)
+  start <- startingProbabilities(msData, trans)
 
   # extract probabilities
   strata <- unique(c(list(character()), strata))
@@ -140,7 +140,8 @@ extractProbabilities <- function(x, trans, followUp, start) {
         dplyr::mutate(initial_state = .env$x)
     }) |>
     dplyr::bind_rows() |>
-    dplyr::mutate(variable_level = as.character(.data$variable_level))
+    dplyr::mutate(variable_level = as.character(.data$variable_level)) |>
+    dplyr::arrange(as.numeric(.data$variable_level), .data$variable_name)
 
   # initial state
   probInitial <- probStates |>
@@ -148,7 +149,8 @@ extractProbabilities <- function(x, trans, followUp, start) {
     dplyr::mutate(probability = .data$probability * .data$prob) |>
     dplyr::group_by(.data$variable_level, .data$variable_name) |>
     dplyr::summarise(probability = sum(.data$probability), .groups = "drop") |>
-    dplyr::mutate(initial_state = NA_character_)
+    dplyr::mutate(initial_state = NA_character_) |>
+    dplyr::arrange(as.numeric(.data$variable_level), .data$variable_name)
 
   dplyr::union_all(probInitial, probStates)
 }
@@ -162,18 +164,57 @@ pkgVersion <- function() {
 #' Title
 #'
 #' @param result
-#' @param facet
-#' @param colour
 #' @param style
-#' @param initialState
+#' @param timeScale
 #'
 #' @returns
 #' @export
 #'
 #' @examples
 plotMultistateProbabilities <- function(result,
-                                        facet = "cdm_name",
-                                        colour = "state",
                                         style = NULL,
-                                        initialState = NULL) {
+                                        timeScale = "days") {
+  rlang::check_installed(c("visOmopResults", "ggplot2", "scales"))
+
+  # initial checks
+  result <- omopgenerics::validateResultArgument(result)
+  visTheme <- visOmopResults::themeVisOmop(style = style)
+  omopgenerics::assertChoice(timeScale, c("days", "years"), length = 1)
+
+  x <- result |>
+    omopgenerics::tidy() |>
+    dplyr::mutate(
+      time = as.numeric(.data$variable_level),
+      state = stringr::str_remove(.data$variable_name, "prob_")
+    )
+
+  facet <- colnames(x) |>
+    purrr::keep(\(col) {
+      if (col %in% c("variable_name", "variable_level", "probability", "time", "state")) {
+        FALSE
+      } else if (length(unique(x[[col]])) == 1) {
+        FALSE
+      } else {
+        TRUE
+      }
+    })
+
+  if (timeScale == "years") {
+    x <- x |>
+      dplyr::mutate(time = .data$time / 365.25)
+    xLab <- "Time (year)"
+  } else {
+    xLab <- "Time (days)"
+  }
+
+  ggplot2::ggplot(
+    data = x,
+    mapping = ggplot2::aes(x = time, y = probability, fill = state)
+  ) +
+    ggplot2::geom_area() +
+    ggplot2::facet_wrap(facet) +
+    visTheme +
+    ggplot2::labs(x = xLab, y = "Probability (%)", fill = "") +
+    ggplot2::theme(legend.position = "top") +
+    ggplot2::scale_y_continuous(labels = scales::percent)
 }

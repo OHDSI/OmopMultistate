@@ -2,7 +2,7 @@
 #' Title
 #'
 #' @param cohort
-#' @param trans
+#' @inheritParams transDoc
 #' @param eventDate
 #' @param censorDate
 #' @param stateHierarchy
