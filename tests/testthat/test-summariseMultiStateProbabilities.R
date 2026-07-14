@@ -31,5 +31,10 @@ test_that("summariseMultistateProbabilities", {
     plotMultistateProbabilities(result = res)
   )
 
+  expect_no_error(
+    plotYears <- plotMultistateProbabilities(result = res, timeScale = "years")
+  )
+  expect_equal(plotYears$labels$x, "Time (year)")
+
   dropCreatedTables(cdm)
 })
