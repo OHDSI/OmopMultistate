@@ -55,7 +55,15 @@ prepareMultistateData <- function(cohort,
 
   # states hierarchy
   stateHierarchy <- dplyr::tibble(state = stateHierarchy) |>
-    dplyr::mutate(id = dplyr::row_number())
+    dplyr::mutate(id = dplyr::row_number()) |>
+    dplyr::full_join(dplyr::tibble(state = states), by = "state")
+  if (all(is.na(stateHierarchy$id))) {
+    mID <- 0
+  } else {
+    mID <- max(stateHierarchy$id, na.rm = TRUE)
+  }
+  stateHierarchy <- stateHierarchy |>
+    dplyr::mutate(id = dplyr::coalesce(.data$id, .env$mID))
 
   # prepare censor date
   cohort <- cohort |>
@@ -88,10 +96,11 @@ prepareMultistateData <- function(cohort,
     dplyr::group_by(.data$subject_id) |>
     dplyr::filter(.data$date_event == min(.data$date_event, na.rm = TRUE)) |>
     dplyr::ungroup() |>
-    dplyr::select("subject_id", "state", "date_event")
+    dplyr::select("subject_id", "state", "date_event") |>
+    dplyr::mutate(time_event = 0)
 
   # update times
-  states <- updateTime(states, stateHierarchy, stateStep)
+  current <- updateTime(current, stateHierarchy, stateStep)
 
   # check individuals with more than one initial state
   checkMultiple(current)
@@ -122,6 +131,9 @@ prepareMultistateData <- function(cohort,
       time_censor = clock::date_count_between(.data$time_0, .data$censor_date)
     ) |>
     dplyr::select("subject_id", "state", "time_event", "time_censor")
+
+  # update times
+  states <- updateTime(states, stateHierarchy, stateStep)
 
   # update current
   current <- current |>
@@ -155,7 +167,10 @@ prepareMultistateData <- function(cohort,
       dplyr::group_by(.data$subject_id) |>
       dplyr::filter(.data$Tstop == min(.data$Tstop, na.rm = TRUE)) |>
       dplyr::ungroup() |>
-      dplyr::select("subject_id", "Tstop", status = "to")
+      dplyr::select("subject_id", "Tstop", state = "to")
+
+    # check individuals with more than one state
+    checkMultiple(activeTransiton, iteration = i)
 
     # build msdata rows for current state visits
     activeTransitons <- possibleTransitions |>
@@ -166,7 +181,7 @@ prepareMultistateData <- function(cohort,
         # put status 1 to the transition that takes place
         status = dplyr::case_when(
           is.na(.data$to) ~ 0,
-          .data$to == .data$status ~ 1,
+          .data$to == .data$state ~ 1,
           .default = 0
         )
       ) |>
@@ -229,8 +244,7 @@ updateTime <- function(states, stateHierarchy, stateStep) {
   states |>
     dplyr::inner_join(stateHierarchy, by = "state") |>
     dplyr::group_by(.data$subject_id, .data$time_event) |>
-    dplyr::arrange(.data$id) |>
-    dplyr::mutate(time_event = .data$time_event + .env$stateStep + (dplyr::row_number() - 1)) |>
+    dplyr::mutate(time_event = .data$time_event + .env$stateStep * (dplyr::dense_rank(.data$id) - 1)) |>
     dplyr::ungroup() |>
     dplyr::select(!"id")
 }
