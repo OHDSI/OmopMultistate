@@ -80,8 +80,8 @@ prepareMultistateData <- function(cohort,
       )
   }
 
-  # get states
-  states <- cohort |>
+  # get allStates
+  allStates <- cohort |>
     dplyr::select(
       "state" = "cohort_name",
       "subject_id",
@@ -90,62 +90,49 @@ prepareMultistateData <- function(cohort,
     ) |>
     dplyr::collect()
 
-  # initialise: each subject starts at their first state
-  current <- states |>
+  # censored states
+  n0 <- .numberRecords(allStates)
+  allStates <- allStates |>
+    dplyr::filter(.data$date_event <= .data$censor_date)
+  nD <- n0 - .numberRecords(allStates)
+  reportIndividuals(nD, "event occurred after censor date")
+
+  # initialise: calculate time 0 for each individual
+  time0 <- allStates |>
     dplyr::filter(.data$state %in% .env$initialStates) |>
     dplyr::group_by(.data$subject_id) |>
-    dplyr::filter(.data$date_event == min(.data$date_event, na.rm = TRUE)) |>
-    dplyr::ungroup() |>
-    dplyr::select("subject_id", "state", "date_event") |>
-    dplyr::mutate(time_event = 0)
+    dplyr::summarise(time_0 = min(.data$date_event, na.rm = TRUE), .groups = "drop")
 
-  # update times
-  current <- updateTime(current, stateHierarchy, stateStep)
+  # keep only records after initial state
+  n0 <- .numberRecords(allStates)
+  allStates <- allStates |>
+    dplyr::left_join(time0, by = "subject_id") |>
+    dplyr::filter(.data$time_0 <= .data$date_event)
+  nD <- n0 - .numberRecords(allStates)
+  reportIndividuals(nD, "event occurred before start event")
+
+  # calculate time
+  allStates <- allStates |>
+    dplyr::mutate(
+      Tstart = as.numeric(clock::date_count_between(.data$time_0, .data$date_event, "day")),
+      time_censor = as.numeric(clock::date_count_between(.data$time_0, .data$censor_date, "day"))
+    ) |>
+    dplyr::select("subject_id", "state", "Tstart", "time_censor")
+
+  # update conflicting times
+  allStates <- updateTime(allStates, stateHierarchy, stateStep)
+
+  # initial states
+  current <- allStates |>
+    dplyr::filter(.data$Tstart == 0)
 
   # check individuals with more than one initial state
   checkMultiple(current)
 
-  # censored states
-  n0 <- omopgenerics::numberRecords(states)
-  states <- states |>
-    dplyr::filter(.data$date_event <= .data$censor_date)
-  nD <- n0 - omopgenerics::numberRecords(states)
-  reportIndividuals(nD, "event occurred after censor date")
-
-  # keep only records after initial state
-  n0 <- omopgenerics::numberRecords(states)
-  states <- states |>
-    dplyr::left_join(
-      current |>
-        dplyr::select("subject_id", "time_0" = "date_event"),
-      by = "subject_id"
-    ) |>
-    dplyr::filter(.data$time_0 <= .data$date_event)
-  nD <- n0 - omopgenerics::numberRecords(states)
-  reportIndividuals(nD, "event occurred before start event")
-
-  # calculate time
-  states <- states |>
-    dplyr::mutate(
-      time_event = clock::date_count_between(.data$time_0, .data$date_event),
-      time_censor = clock::date_count_between(.data$time_0, .data$censor_date)
-    ) |>
-    dplyr::select("subject_id", "state", "time_event", "time_censor")
-
-  # update times
-  states <- updateTime(states, stateHierarchy, stateStep)
-
-  # update current
-  current <- current |>
-    dplyr::select("subejct_id", "state", "time_event")
-
-  # update event time for conflicting times
-  states <- updateTime(states, stateHierarchy, stateStep)
-
   msdata <- list()
   i <- 1L
 
-  while (omopgenerics::numberRecords(current) > 0) {
+  while (.numberRecords(current) > 0) {
 
     # for each subject in current state, find the possible transitions
     possibleTransitions <- current |>
@@ -155,14 +142,14 @@ prepareMultistateData <- function(cohort,
     # find the transition that takes place
     activeTransiton <- possibleTransitions |>
       dplyr::inner_join(
-        states |>
-          dplyr::select("subject_id", Tstop = "time_event", to = "state"),
+        allStates |>
+          dplyr::select("subject_id", Tstop = "Tstart", to = "state"),
         by = c("subject_id", "to")
       ) |>
       # state comes after start
       dplyr::filter(.data$Tstart < .data$Tstop) |>
       # state comes before censoring
-      dplyr::filter(.data$Tstop < .data$censor_time) |>
+      dplyr::filter(.data$Tstop < .data$time_censor) |>
       # subset to first transition
       dplyr::group_by(.data$subject_id) |>
       dplyr::filter(.data$Tstop == min(.data$Tstop, na.rm = TRUE)) |>
@@ -177,7 +164,7 @@ prepareMultistateData <- function(cohort,
       dplyr::left_join(activeTransiton, by = "subject_id") |>
       dplyr::mutate(
         # if no transition then they are censored
-        Tstop = dplyr::coalesce(.data$Tstop, .data$censor_time),
+        Tstop = dplyr::coalesce(.data$Tstop, .data$time_censor),
         # put status 1 to the transition that takes place
         status = dplyr::case_when(
           is.na(.data$to) ~ 0,
@@ -187,31 +174,64 @@ prepareMultistateData <- function(cohort,
       ) |>
       dplyr::select(
         "subject_id", "from", "to", "trans", "Tstart", "Tstop", "status",
-        "censor_time"
+        "time_censor"
       )
 
     # active states after transition
     current <- activeTransitons |>
       dplyr::filter(.data$status == 1, .data$to %in% .env$initialStates) |>
-      dplyr::select("subject_id", state = "to", Tstart = "Tstop", "censor_time")
+      dplyr::select("subject_id", state = "to", Tstart = "Tstop", "time_censor")
 
-    msdata[[i]] <- activeTransitons
+    msdata[[i]] <- activeTransitons |>
+      dplyr::select(!"time_censor")
     i <- i + 1L
   }
 
   # bind all ms data
   msdata <- dplyr::bind_rows(msdata)
 
-  # warn about not reached states
+  # update from, to values
+  stateId <- dplyr::tibble(state = colnames(trans)) |>
+    dplyr::mutate(id = as.integer(dplyr::row_number()))
+  msdata <- msdata |>
+    dplyr::rename("from_name" = "from", "to_name" = "to") |>
+    dplyr::inner_join(
+      stateId |>
+        dplyr::rename(from_name = "state", from = "id"),
+      by = "from_name"
+    ) |>
+    dplyr::inner_join(
+      stateId |>
+        dplyr::rename(to_name = "state", to = "id"),
+      by = "to_name"
+    ) |>
+    dplyr::relocate("subject_id", "from", "to", "trans", "Tstart", "Tstop", "status")
 
-  attr(msres, "trans") <- trans
-  class(msres) <- c("msdata", "data.frame")
+  # warn about not reached states
+  notReached <- allStates |>
+    dplyr::anti_join(
+      msdata |>
+        dplyr::select("subject_id", "state" = "from_name", "Tstart") |>
+        dplyr::distinct(),
+      by = c("subject_id", "state", "Tstart")
+    ) |>
+    dplyr::anti_join(
+      msdata |>
+        dplyr::filter(.data$status == 1) |>
+        dplyr::select("subject_id", "state" = "to_name", "Tstart" = "Tstop"),
+      by = c("subject_id", "state", "Tstart")
+    ) |>
+    .numberRecords()
+  reportIndividuals(notReached, "transition not allowed")
+
+  attr(msdata, "trans") <- trans
+  class(msdata) <- c("msdata", "data.frame")
 
   return(msdata)
 }
 reportIndividuals <- function(n, reason) {
   if (n > 0) {
-    cli::cli_inform(c("i" = "{.strong {n}} record{?s} won't be reached due to `{.emph {reason}}`."))
+    cli::cli_inform(c("i" = "{.strong {n}} record{?s} not reached due to `{.emph {reason}}`."))
   }
 }
 checkMultiple <- function(states, iteration = 0) {
@@ -241,8 +261,15 @@ checkMultiple <- function(states, iteration = 0) {
 updateTime <- function(states, stateHierarchy, stateStep) {
   states |>
     dplyr::inner_join(stateHierarchy, by = "state") |>
-    dplyr::group_by(.data$subject_id, .data$time_event) |>
-    dplyr::mutate(time_event = .data$time_event + .env$stateStep * (dplyr::dense_rank(.data$id) - 1)) |>
+    dplyr::group_by(.data$subject_id, .data$Tstart) |>
+    dplyr::mutate(Tstart = .data$Tstart + .env$stateStep * (dplyr::dense_rank(.data$id) - 1)) |>
     dplyr::ungroup() |>
     dplyr::select(!"id")
+}
+.numberRecords <- function(x) {
+  x |>
+    dplyr::ungroup() |>
+    dplyr::tally() |>
+    dplyr::pull() |>
+    as.integer()
 }

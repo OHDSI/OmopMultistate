@@ -27,15 +27,13 @@ summariseMultistateProbabilities <- function(cohort,
   # initial checks
   cohort <- omopgenerics::validateCohortArgument(cohort = cohort)
   strata <- omopgenerics::validateStrataArgument(strata = strata, table = cohort)
-  if (length(strata) > 0) {
-    cols <- c(
-      omopgenerics::cohortColumns(table = "cohort"), eventDate, censorDate,
-      unlist(strata)
-    ) |>
-      unique()
-    cohort <- cohort |>
-      dplyr::select(dplyr::all_of(cols))
-  }
+  cols <- c(
+    omopgenerics::cohortColumns(table = "cohort"), eventDate, censorDate,
+    unlist(strata)
+  ) |>
+    unique()
+  cohort <- cohort |>
+    dplyr::select(dplyr::all_of(cols))
 
   # prepare the multistate data
   msData <- prepareMultistateData(
@@ -61,7 +59,7 @@ summariseMultistateProbabilities <- function(cohort,
           extractProbabilities(ms, trans, followUpDays, start) |>
             dplyr::cross_join(
               ms |>
-                dplyr::select(dplyr::any_of(strata)) |>
+                dplyr::select(dplyr::any_of(st)) |>
                 dplyr::distinct()
             )
         }) |>
@@ -94,22 +92,17 @@ summariseMultistateProbabilities <- function(cohort,
   return(result)
 }
 startingProbabilities <- function(msData, trans) {
-  states <- colnames(trans)
   msData |>
     dplyr::filter(.data$Tstart == 0) |>
-    dplyr::distinct(.data$subject_id, .data$from) |>
-    dplyr::group_by(.data$from) |>
+    dplyr::distinct(.data$subject_id, .data$from_name) |>
+    dplyr::group_by(.data$from_name) |>
     dplyr::summarise(n = as.numeric(dplyr::n()), .groups = "drop") |>
-    dplyr::collect() |>
-    dplyr::right_join(
-      dplyr::tibble(initial_state = states, from = seq_along(states)),
-      by = "from"
-    ) |>
+    dplyr::right_join(dplyr::tibble(from_name = states), by = "from_name") |>
     dplyr::mutate(
       n = dplyr::coalesce(.data$n, 0),
       prob = .data$n / sum(.data$n)
     ) |>
-    dplyr::select("initial_state", "prob")
+    dplyr::select("initial_state" = "from_name", "prob")
 }
 extractProbabilities <- function(x, trans, followUp, start) {
   states <- colnames(trans)

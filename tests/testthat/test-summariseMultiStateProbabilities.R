@@ -1,3 +1,35 @@
-test_that("multiplication works", {
-  expect_equal(2 * 2, 4)
+test_that("summariseMultistateProbabilities", {
+  # create test cdm
+  cdm <- omock::mockCdmFromTables(tables = list(
+    cohort1 = dplyr::tibble(
+      cohort_definition_id = c(1L, 1L, 1L, 2L, 2L, 3L),
+      subject_id = 1L,
+      cohort_start_date = as.Date("2020-01-01") + c(0L, 100L, 120L, 50L, 110L, 150L),
+      cohort_end_date = cohort_start_date
+    )
+  )) |>
+    copyCdm()
+
+  cdm$cohort1 <- cdm$cohort1 |>
+    CohortConstructor::renameCohort(c("treated", "untreated", "death"))
+
+  expect_no_error(
+    trans <- transMat(
+      x = list(c(2, 3), c(1, 3), c()),
+      names = c("treated", "untreated", "death")
+    )
+  )
+
+  expect_no_error(
+    res <- summariseMultistateProbabilities(
+      cohort = cdm$cohort1,
+      trans = trans
+    )
+  )
+
+  expect_no_error(
+    plotMultistateProbabilities(result = result)
+  )
+
+  dropCreatedTables(cdm)
 })
