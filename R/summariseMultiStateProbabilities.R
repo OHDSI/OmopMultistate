@@ -44,12 +44,9 @@ summariseMultistateProbabilities <- function(cohort,
     eventDate = eventDate,
     censorDate = censorDate,
     stateHierarchy = stateHierarchy,
-    stateStep = 0.01,
+    stateStep = stateStep,
     keepExtraColumns = TRUE
   )
-
-  # get start probabilities
-  start <- startingProbabilities(msData, trans)
 
   # extract probabilities
   strata <- unique(c(list(character()), strata))
@@ -60,10 +57,11 @@ summariseMultistateProbabilities <- function(cohort,
         dplyr::group_split() |>
         as.list() |>
         purrr::map(\(ms) {
+          start <- startingProbabilities(ms, trans)
           extractProbabilities(ms, trans, followUpDays, start) |>
             dplyr::cross_join(
               ms |>
-                dplyr::select(dplyr::any_of(st)) |>
+                dplyr::select(dplyr::any_of(strata)) |>
                 dplyr::distinct()
             )
         }) |>
