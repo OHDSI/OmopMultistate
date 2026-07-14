@@ -52,12 +52,10 @@ prepareMultistateData <- function(cohort,
   # check states hierarchy
   omopgenerics::assertChoice(stateHierarchy, choices = states)
   omopgenerics::assertNumeric(stateStep, length = 1)
-  stateHierarchy <- dplyr::tibble(
-    state = stateHierarchy,
-    step = stateStep * seq_along(stateHierarchy)
-  ) |>
-    dplyr::full_join(dplyr::tibble(state = states), by = "state") |>
-    dplyr::mutate(step = dplyr::coalesce(.data$step, 0))
+
+  # states hierarchy
+  stateHierarchy <- dplyr::tibble(state = stateHierarchy) |>
+    dplyr::mutate(id = dplyr::row_number())
 
   # prepare censor date
   cohort <- cohort |>
@@ -73,8 +71,6 @@ prepareMultistateData <- function(cohort,
         "censor_date" = dplyr::coalesce(.data[[censorDate]], .data$censor_date)
       )
   }
-
-  # add time to censor date
 
   # get states
   states <- cohort |>
@@ -92,27 +88,47 @@ prepareMultistateData <- function(cohort,
     dplyr::group_by(.data$subject_id) |>
     dplyr::filter(.data$date_event == min(.data$date_event, na.rm = TRUE)) |>
     dplyr::ungroup() |>
-    dplyr::select("subject_id", "state", "date_event") |>
-    computeNull(cnm)
+    dplyr::select("subject_id", "state", "date_event")
+
+  # update times
+  states <- updateTime(states, stateHierarchy, stateStep)
 
   # check individuals with more than one initial state
   checkMultiple(current)
 
+  # censored states
+  n0 <- omopgenerics::numberRecords(states)
+  states <- states |>
+    dplyr::filter(.data$date_event <= .data$censor_date)
+  nD <- n0 - omopgenerics::numberRecords(states)
+  reportIndividuals(nD, "event occurred after censor date")
+
   # keep only records after initial state
-  ns <- omopgenerics::numberRecords(states)
+  n0 <- omopgenerics::numberRecords(states)
   states <- states |>
     dplyr::left_join(
       current |>
         dplyr::select("subject_id", "time_0" = "date_event"),
       by = "subject_id"
     ) |>
-    dplyr::filter(.data$time_0 <= .data$date_event) |>
-    computeNull(snm)
-  nn <- omopgenerics::numberRecords(states)
-  nd <- nn - ns
-  if (nd > 0) {
-    cli::cli_inform(c("!" = "There are {nd} states that occur before first entry and will never be reached."))
-  }
+    dplyr::filter(.data$time_0 <= .data$date_event)
+  nD <- n0 - omopgenerics::numberRecords(states)
+  reportIndividuals(nD, "event occurred before start event")
+
+  # calculate time
+  states <- states |>
+    dplyr::mutate(
+      time_event = clock::date_count_between(.data$time_0, .data$date_event),
+      time_censor = clock::date_count_between(.data$time_0, .data$censor_date)
+    ) |>
+    dplyr::select("subject_id", "state", "time_event", "time_censor")
+
+  # update current
+  current <- current |>
+    dplyr::select("subejct_id", "state", "time_event")
+
+  # update event time for conflicting times
+  states <- updateTime(states, stateHierarchy, stateStep)
 
   msdata <- list()
   i <- 1L
@@ -180,7 +196,11 @@ prepareMultistateData <- function(cohort,
 
   return(msdata)
 }
-
+reportIndividuals <- function(n, reason) {
+  if (n > 0) {
+    cli::cli_inform(c("i" = "{.strong {n}} record{?s} won't be reached due to `{.emph {reason}}`."))
+  }
+}
 checkMultiple <- function(states, iteration = 0) {
   multiple <- current |>
     dplyr::group_by(.data$subject_id) |>
@@ -204,4 +224,13 @@ checkMultiple <- function(states, iteration = 0) {
     cli::cli_abort(c(x = message, i = "Individuals are not allowed to be in more than one state at the same time. Use the `stateHeriarchy`"))
   }
   invisible()
+}
+updateTime <- function(states, stateHierarchy, stateStep) {
+  states |>
+    dplyr::inner_join(stateHierarchy, by = "state") |>
+    dplyr::group_by(.data$subject_id, .data$time_event) |>
+    dplyr::arrange(.data$id) |>
+    dplyr::mutate(time_event = .data$time_event + .env$stateStep + (dplyr::row_number() - 1)) |>
+    dplyr::ungroup() |>
+    dplyr::select(!"id")
 }
