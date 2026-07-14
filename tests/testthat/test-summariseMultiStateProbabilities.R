@@ -28,7 +28,7 @@ test_that("summariseMultistateProbabilities", {
   )
 
   expect_no_error(
-    plotMultistateProbabilities(result = result)
+    plotMultistateProbabilities(result = res)
   )
 
   dropCreatedTables(cdm)

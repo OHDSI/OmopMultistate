@@ -27,8 +27,12 @@ BugReports: https://github.com/oxford-pharmacoepi/OmopMultistate/issues
 Suggests: 
     CDMConnector,
     CohortConstructor,
+    DBI,
+    duckdb,
     ggplot2,
+    odbc,
     omock,
+    RPostgres,
     scales,
     testthat (>= 3.0.0),
     visOmopResults

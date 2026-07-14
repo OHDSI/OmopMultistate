@@ -97,7 +97,7 @@ startingProbabilities <- function(msData, trans) {
     dplyr::distinct(.data$subject_id, .data$from_name) |>
     dplyr::group_by(.data$from_name) |>
     dplyr::summarise(n = as.numeric(dplyr::n()), .groups = "drop") |>
-    dplyr::right_join(dplyr::tibble(from_name = states), by = "from_name") |>
+    dplyr::right_join(dplyr::tibble(from_name = colnames(trans)), by = "from_name") |>
     dplyr::mutate(
       n = dplyr::coalesce(.data$n, 0),
       prob = .data$n / sum(.data$n)
