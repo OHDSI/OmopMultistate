@@ -22,6 +22,7 @@ prepareMultistateData <- function(cohort,
                                   keepExtraColumns = TRUE) {
   # initial validations
   cohort <- omopgenerics::validateCohortArgument(cohort)
+  assertTrans(trans)
   omopgenerics::validateColumn(eventDate, cohort, type = "date")
   omopgenerics::validateColumn(censorDate, cohort, type = "date", null = TRUE)
   omopgenerics::assertLogical(keepExtraColumns)
