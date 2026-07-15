@@ -213,7 +213,7 @@ plotMultistateProbabilities <- function(result,
 
   x <- stepAreaData(x, facet)
 
-  ggplot2::ggplot(
+  p <- ggplot2::ggplot(
     data = x,
     mapping = ggplot2::aes(
       x = .data$time,
@@ -222,8 +222,14 @@ plotMultistateProbabilities <- function(result,
       fill = .data$state
     )
   ) +
-    ggplot2::geom_ribbon() +
-    ggplot2::facet_wrap(facet) +
+    ggplot2::geom_ribbon()
+
+  if (length(facet) > 0) {
+    p <- p +
+      ggplot2::facet_wrap(facet)
+  }
+
+  p +
     visTheme +
     ggplot2::labs(x = xLab, y = "Probability (%)", fill = "") +
     ggplot2::theme(legend.position = "top") +
