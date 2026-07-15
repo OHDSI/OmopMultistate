@@ -7,9 +7,9 @@
 
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![R-CMD-check](https://github.com/oxford-pharmacoepi/OmopMultistate/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/oxford-pharmacoepi/OmopMultistate/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/OHDSI/OmopMultistate/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/OHDSI/OmopMultistate/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
-coverage](https://codecov.io/gh/oxford-pharmacoepi/OmopMultistate/graph/badge.svg)](https://app.codecov.io/gh/oxford-pharmacoepi/OmopMultistate)
+coverage](https://codecov.io/gh/OHDSI/OmopMultistate/graph/badge.svg)](https://app.codecov.io/gh/OHDSI/OmopMultistate)
 <!-- badges: end -->
 
 **OmopMultistate** estimates how individuals move between clinically
@@ -39,8 +39,8 @@ Model](https://ohdsi.github.io/Tidy-R-programming-with-OMOP/) book.
 
 | Source | Driver | CDM reference | Status |
 |----|----|----|----|
-| Local R data frame | N/A | `omopgenerics::cdmFromTables()` | ![](https://img.shields.io/github/actions/workflow/status/oxford-pharmacoepi/OmopMultistate/test-weekly.yaml?branch=main&job=local-omopgenerics) |
-| In-memory DuckDB database | duckdb | `CDMConnector::cdmFromCon()` | ![](https://img.shields.io/github/actions/workflow/status/oxford-pharmacoepi/OmopMultistate/test-weekly.yaml?branch=main&job=duckdb-CDMConnector) |
+| Local R data frame | N/A | `omopgenerics::cdmFromTables()` | [![](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=local-omopgenerics)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
+| In-memory DuckDB database | duckdb | `CDMConnector::cdmFromCon()` | [![](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=duckdb-CDMConnector)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
 
 ## Installation
 
@@ -49,7 +49,7 @@ You can install the development version of OmopMultistate from
 
 ``` r
 # install.packages("pak")
-pak::pak("oxford-pharmacoepi/OmopMultistate")
+pak::pak("OHDSI/OmopMultistate")
 ```
 
 ## Example
