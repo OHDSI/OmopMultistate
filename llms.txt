@@ -50,8 +50,16 @@ states: `treated`, `untreated`, and the absorbing state `death`.
 
 library(OmopMultistate)
 library(omock)
+library(CohortConstructor)
+#> Warning: package 'CohortConstructor' was built under R version 4.4.3
+library(CodelistGenerator)
+#> Warning: package 'CodelistGenerator' was built under R version 4.4.3
+library(dplyr)
+#> Warning: package 'dplyr' was built under R version 4.4.3
 
 cdm <- mockCdmFromDataset(datasetName = "synpuf-1k", source = "duckdb")
+
+cdm
 ```
 
 First we will do the simplest possible case, we analyse discontinuation
@@ -61,11 +69,6 @@ discontinuation of acetaminophen (untreated) and death. We will use
 to create the cohorts.
 
 ``` r
-
-library(CohortConstructor)
-#> Warning: package 'CohortConstructor' was built under R version 4.4.3
-library(CodelistGenerator)
-#> Warning: package 'CodelistGenerator' was built under R version 4.4.3
 
 codes <- getDrugIngredientCodes(cdm = cdm, name = "acetaminophen", nameStyle = "{concept_name}")
 
@@ -91,6 +94,16 @@ cdm$untreated <- cdm$acetaminophen |>
 
 # bind them together
 cdm <- bind(cdm$acetaminophen, cdm$death_cohort, cdm$untreated, name = "my_study")
+
+# the created cohort
+settings(cdm$my_study)
+#> # A tibble: 3 × 6
+#>   cohort_definition_id cohort_name   cdm_version vocabulary_version
+#>                  <int> <chr>         <chr>       <chr>             
+#> 1                    1 acetaminophen 5.4         v5.0 29-APR-16    
+#> 2                    2 death_cohort  <NA>        <NA>              
+#> 3                    3 untreated     5.4         v5.0 29-APR-16    
+#> # ℹ 2 more variables: subset_cohort_table <chr>, subset_cohort_id <dbl>
 ```
 
 Now we will focus on defining the transitions, the individuals can move
@@ -136,21 +149,22 @@ msData <- prepareMultistateData(
 )
 
 msData |>
+  arrange(subject_id, Tstart) |>
   head(10)
 #> An object of class 'msdata'
 #> 
 #> Data:
-#>    subject_id from to trans Tstart Tstop status     from_name      to_name
-#> 1          18    1  2     1      0    10      1 acetaminophen    untreated
-#> 2          18    1  3     2      0    10      0 acetaminophen death_cohort
-#> 3          25    1  2     1      0    30      1 acetaminophen    untreated
-#> 4          25    1  3     2      0    30      0 acetaminophen death_cohort
-#> 5          29    1  2     1      0    10      1 acetaminophen    untreated
-#> 6          29    1  3     2      0    10      0 acetaminophen death_cohort
-#> 7          32    1  2     1      0    30      1 acetaminophen    untreated
-#> 8          32    1  3     2      0    30      0 acetaminophen death_cohort
-#> 9          51    1  2     1      0    10      1 acetaminophen    untreated
-#> 10         51    1  3     2      0    10      0 acetaminophen death_cohort
+#>    subject_id from to trans Tstart Tstop status     from_name       to_name
+#> 1           1    1  2     1      0    30      1 acetaminophen     untreated
+#> 2           1    1  3     2      0    30      0 acetaminophen  death_cohort
+#> 3           1    2  1     3     30   373      1     untreated acetaminophen
+#> 4           1    2  3     4     30   373      0     untreated  death_cohort
+#> 5           1    1  2     1    373   403      1 acetaminophen     untreated
+#> 6           1    1  3     2    373   403      0 acetaminophen  death_cohort
+#> 7           1    2  1     3    403   532      1     untreated acetaminophen
+#> 8           1    2  3     4    403   532      0     untreated  death_cohort
+#> 9           1    1  2     1    532   552      1 acetaminophen     untreated
+#> 10          1    1  3     2    532   552      0 acetaminophen  death_cohort
 ```
 
 If we are interested in summarising the probabilities over time we can
@@ -178,14 +192,14 @@ tidy(result)
 #>    cdm_name  initial_state variable_name      variable_level probability
 #>    <chr>     <chr>         <chr>              <chr>                <dbl>
 #>  1 synpuf-1k overall       prob_acetaminophen 0                    1    
-#>  2 synpuf-1k overall       prob_untreated     0                    0
-#>  3 synpuf-1k overall       prob_death_cohort  0                    0
+#>  2 synpuf-1k overall       prob_untreated     0                    0    
+#>  3 synpuf-1k overall       prob_death_cohort  0                    0    
 #>  4 synpuf-1k overall       prob_acetaminophen 10                   0.770
 #>  5 synpuf-1k overall       prob_untreated     10                   0.230
-#>  6 synpuf-1k overall       prob_death_cohort  10                   0
+#>  6 synpuf-1k overall       prob_death_cohort  10                   0    
 #>  7 synpuf-1k overall       prob_acetaminophen 12                   0.772
 #>  8 synpuf-1k overall       prob_untreated     12                   0.228
-#>  9 synpuf-1k overall       prob_death_cohort  12                   0
+#>  9 synpuf-1k overall       prob_death_cohort  12                   0    
 #> 10 synpuf-1k overall       prob_acetaminophen 13                   0.774
 #> # ℹ 9,542 more rows
 #> # ℹ 4 more variables: cohort_table_name <chr>, follow_up_days <chr>,
