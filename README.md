@@ -146,16 +146,16 @@ msData |>
 #> 
 #> Data:
 #>    subject_id from to trans Tstart Tstop status     from_name      to_name
-#> 1           2    1  2     1      0    60      1 acetaminophen    untreated
-#> 2           2    1  3     2      0    60      0 acetaminophen death_cohort
-#> 3           5    1  2     1      0    20      1 acetaminophen    untreated
-#> 4           5    1  3     2      0    20      0 acetaminophen death_cohort
-#> 5          10    1  2     1      0    30      1 acetaminophen    untreated
-#> 6          10    1  3     2      0    30      0 acetaminophen death_cohort
-#> 7          18    1  2     1      0    10      1 acetaminophen    untreated
-#> 8          18    1  3     2      0    10      0 acetaminophen death_cohort
-#> 9          25    1  2     1      0    30      1 acetaminophen    untreated
-#> 10         25    1  3     2      0    30      0 acetaminophen death_cohort
+#> 1          18    1  2     1      0    10      1 acetaminophen    untreated
+#> 2          18    1  3     2      0    10      0 acetaminophen death_cohort
+#> 3          25    1  2     1      0    30      1 acetaminophen    untreated
+#> 4          25    1  3     2      0    30      0 acetaminophen death_cohort
+#> 5          29    1  2     1      0    10      1 acetaminophen    untreated
+#> 6          29    1  3     2      0    10      0 acetaminophen death_cohort
+#> 7          32    1  2     1      0    30      1 acetaminophen    untreated
+#> 8          32    1  3     2      0    30      0 acetaminophen death_cohort
+#> 9          51    1  2     1      0    10      1 acetaminophen    untreated
+#> 10         51    1  3     2      0    10      0 acetaminophen death_cohort
 ```
 
 If we are interested in summarising the probabilities over time we can
@@ -181,21 +181,22 @@ tidy(result)
 #>    cdm_name  initial_state variable_name      variable_level probability
 #>    <chr>     <chr>         <chr>              <chr>                <dbl>
 #>  1 synpuf-1k overall       prob_acetaminophen 0                    1    
-#>  2 synpuf-1k overall       prob_death_cohort  0                    0    
-#>  3 synpuf-1k overall       prob_untreated     0                    0    
+#>  2 synpuf-1k overall       prob_untreated     0                    0
+#>  3 synpuf-1k overall       prob_death_cohort  0                    0
 #>  4 synpuf-1k overall       prob_acetaminophen 10                   0.770
-#>  5 synpuf-1k overall       prob_death_cohort  10                   0    
-#>  6 synpuf-1k overall       prob_untreated     10                   0.230
+#>  5 synpuf-1k overall       prob_untreated     10                   0.230
+#>  6 synpuf-1k overall       prob_death_cohort  10                   0
 #>  7 synpuf-1k overall       prob_acetaminophen 12                   0.772
-#>  8 synpuf-1k overall       prob_death_cohort  12                   0    
-#>  9 synpuf-1k overall       prob_untreated     12                   0.228
+#>  8 synpuf-1k overall       prob_untreated     12                   0.228
+#>  9 synpuf-1k overall       prob_death_cohort  12                   0
 #> 10 synpuf-1k overall       prob_acetaminophen 13                   0.774
 #> # ℹ 9,542 more rows
 #> # ℹ 4 more variables: cohort_table_name <chr>, follow_up_days <chr>,
 #> #   state_hierarchy <chr>, state_step <chr>
 ```
 
-You can visualise now the results:
+You can visualise now the results. States are displayed in the same order
+as they appear in the transition matrix:
 
 ``` r
 result |>

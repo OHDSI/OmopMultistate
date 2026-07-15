@@ -106,6 +106,7 @@ startingProbabilities <- function(msData, trans) {
 }
 extractProbabilities <- function(x, trans, followUp, start) {
   states <- colnames(trans)
+  stateOrder <- paste0("prob_", states)
 
   # cox
   cox <- survival::coxph(
@@ -135,7 +136,10 @@ extractProbabilities <- function(x, trans, followUp, start) {
     }) |>
     dplyr::bind_rows() |>
     dplyr::mutate(variable_level = as.character(.data$variable_level)) |>
-    dplyr::arrange(as.numeric(.data$variable_level), .data$variable_name)
+    dplyr::arrange(
+      as.numeric(.data$variable_level),
+      match(.data$variable_name, .env$stateOrder)
+    )
 
   # initial state
   probInitial <- probStates |>
@@ -144,7 +148,10 @@ extractProbabilities <- function(x, trans, followUp, start) {
     dplyr::group_by(.data$variable_level, .data$variable_name) |>
     dplyr::summarise(probability = sum(.data$probability), .groups = "drop") |>
     dplyr::mutate(initial_state = NA_character_) |>
-    dplyr::arrange(as.numeric(.data$variable_level), .data$variable_name)
+    dplyr::arrange(
+      as.numeric(.data$variable_level),
+      match(.data$variable_name, .env$stateOrder)
+    )
 
   dplyr::union_all(probInitial, probStates)
 }
@@ -181,7 +188,8 @@ plotMultistateProbabilities <- function(result,
     omopgenerics::tidy() |>
     dplyr::mutate(
       time = as.numeric(.data$variable_level),
-      state = stringr::str_remove(.data$variable_name, "prob_")
+      state = stringr::str_remove(.data$variable_name, "prob_"),
+      state = factor(.data$state, levels = unique(.data$state))
     )
 
   facet <- colnames(x) |>

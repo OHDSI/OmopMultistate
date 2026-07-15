@@ -28,6 +28,10 @@ test_that("summariseMultistateProbabilities", {
   )
 
   probabilities <- omopgenerics::tidy(res)
+  expect_equal(
+    unique(probabilities$variable_name),
+    paste0("prob_", colnames(trans))
+  )
   expect_true(all(probabilities$probability >= 0))
   expect_true(all(probabilities$probability <= 1))
   totals <- probabilities |>
@@ -36,8 +40,9 @@ test_that("summariseMultistateProbabilities", {
   expect_equal(totals$total, rep(1, nrow(totals)), tolerance = 1e-10)
 
   expect_no_error(
-    plotMultistateProbabilities(result = res)
+    plot <- plotMultistateProbabilities(result = res)
   )
+  expect_equal(levels(plot$data$state), colnames(trans))
 
   expect_no_error(
     plotYears <- plotMultistateProbabilities(result = res, timeScale = "years")

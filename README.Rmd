@@ -156,7 +156,8 @@ These messages describe the input data; they are not R warnings.
 tidy(result)
 ```
 
-You can visualise now the results:
+You can visualise now the results. States are displayed in the same order as
+they appear in the transition matrix:
 
 ```{r plot-probabilities, fig.width=8, fig.height=5}
 result |>
