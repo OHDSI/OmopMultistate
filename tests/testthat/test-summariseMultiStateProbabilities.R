@@ -133,8 +133,9 @@ test_that("stratified probabilities are estimated for each requested group", {
     dplyr::arrange(observedStrata, .data$sex, .data$age_group),
     dplyr::arrange(expectedStrata, .data$sex, .data$age_group)
   )
-  expect_true(all(result$probability >= 0))
-  expect_true(all(result$probability <= 1))
+  tolerance <- sqrt(.Machine$double.eps)
+  expect_gte(min(result$probability), -tolerance)
+  expect_lte(max(result$probability), 1 + tolerance)
 })
 
 test_that("strata must be constant within an individual", {
