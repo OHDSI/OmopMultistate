@@ -67,9 +67,13 @@ The following example uses a small mock OMOP CDM containing three states:
 ```{r example-data, message=FALSE}
 library(OmopMultistate)
 library(omock)
+library(CohortConstructor)
+library(CodelistGenerator)
+library(dplyr)
 
 cdm <- mockCdmFromDataset(datasetName = "synpuf-1k", source = "duckdb")
 
+cdm
 ```
 
 First we will do the simplest possible case, we analyse discontinuation of 
@@ -78,9 +82,6 @@ of acetaminophen (untreated) and death. We will use [CohortConstructor]() to
 create the cohorts.
 
 ```{r}
-library(CohortConstructor)
-library(CodelistGenerator)
-
 codes <- getDrugIngredientCodes(cdm = cdm, name = "acetaminophen", nameStyle = "{concept_name}")
 
 # acetaminophen cohort
@@ -97,6 +98,9 @@ cdm$untreated <- cdm$acetaminophen |>
 
 # bind them together
 cdm <- bind(cdm$acetaminophen, cdm$death_cohort, cdm$untreated, name = "my_study")
+
+# the created cohort
+settings(cdm$my_study)
 ```
 
 Now we will focus on defining the transitions, the individuals can move from:
@@ -133,6 +137,7 @@ msData <- prepareMultistateData(
 )
 
 msData |>
+  arrange(subject_id, Tstart) |>
   head(10)
 ```
 
