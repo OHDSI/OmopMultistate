@@ -61,20 +61,12 @@ NULL
 #' @keywords internal
 NULL
 
-#' Helper for consistent documentation of `keepExtraColumns`.
-#'
-#' @param keepExtraColumns Logical value indicating whether additional columns
-#' from `cohort` should be retained in the prepared multi-state data.
-#'
-#' @name keepExtraColumnsDoc
-#' @keywords internal
-NULL
-
 #' Helper for consistent documentation of `strata`.
 #'
 #' @param strata List of character vectors defining stratifications. Each
 #' character vector identifies one or more columns in `cohort`; a separate model
-#' is fitted for each stratification.
+#' is fitted for each stratification. The value of strata can not change in each
+#' individual.
 #'
 #' @name strataDoc
 #' @keywords internal

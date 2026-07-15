@@ -6,7 +6,8 @@
 \arguments{
 \item{strata}{List of character vectors defining stratifications. Each
 character vector identifies one or more columns in \code{cohort}; a separate model
-is fitted for each stratification.}
+is fitted for each stratification. The value of strata can not change in each
+individual.}
 }
 \description{
 Helper for consistent documentation of \code{strata}.

@@ -42,9 +42,15 @@ summariseMultistateProbabilities <- function(cohort,
     eventDate = eventDate,
     censorDate = censorDate,
     stateHierarchy = stateHierarchy,
-    stateStep = stateStep,
-    keepExtraColumns = TRUE
+    stateStep = stateStep
   )
+
+  # add strata
+  strataData <- getStrataData(cohort, strata)
+
+  # add strata
+  msData <- msData |>
+    dplyr::inner_join(strataData, by = "subject_id")
 
   # extract probabilities
   strata <- unique(c(list(character()), strata))
@@ -160,6 +166,24 @@ pkgName <- function() {
 }
 pkgVersion <- function() {
   as.character(utils::packageVersion(pkg = pkgName()))
+}
+getStrataData <- function(x, strata) {
+  strataCols <- unique(unlist(strata))
+  x <- x |>
+    dplyr::select("subject_id", dplyr::all_of(strataCols)) |>
+    dplyr::distinct() |>
+    dplyr::collect()
+  strataError <- strataCols |>
+    purrr::keep(\(st) {
+      x |>
+        dplyr::group_by(.data$subject_id) |>
+        dplyr::filter(dplyr::n_distinct(.data[[st]]) > 1) |>
+        dplyr::tally() > 0
+    })
+  if (length(strataError) > 0) {
+    cli::cli_abort(c(x = "Multiple values of strata for {.var {strataError}}. Strata has to be unique for each subject_id."))
+  }
+  return(x)
 }
 
 #' Plot Multi-State Occupation Probabilities extracted by
