@@ -5,8 +5,8 @@
 \title{Helper for consistent documentation of \code{censorDate}.}
 \arguments{
 \item{censorDate}{Name of the date column in \code{cohort} that identifies the end
-of follow-up. If \code{NULL}, the end of each individual's observation period is
-used.}
+of follow-up, inclusive. If \code{NULL}, the end of each individual's observation
+period is used.}
 }
 \description{
 Helper for consistent documentation of \code{censorDate}.

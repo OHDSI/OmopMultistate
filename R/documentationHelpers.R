@@ -35,8 +35,8 @@ NULL
 #' Helper for consistent documentation of `censorDate`.
 #'
 #' @param censorDate Name of the date column in `cohort` that identifies the end
-#' of follow-up. If `NULL`, the end of each individual's observation period is
-#' used.
+#' of follow-up, inclusive. If `NULL`, the end of each individual's observation
+#' period is used.
 #'
 #' @name censorDateDoc
 #' @keywords internal
@@ -45,8 +45,8 @@ NULL
 #' Helper for consistent documentation of `stateHierarchy`.
 #'
 #' @param stateHierarchy Character vector of state names in the order used to
-#' resolve states that occur on the same date. An empty character vector applies
-#' no hierarchy.
+#' resolve states that occur on the same date, with earlier entries occurring
+#' first. An empty character vector applies no hierarchy.
 #'
 #' @name stateHierarchyDoc
 #' @keywords internal

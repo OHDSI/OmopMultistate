@@ -5,8 +5,8 @@
 \title{Helper for consistent documentation of \code{stateHierarchy}.}
 \arguments{
 \item{stateHierarchy}{Character vector of state names in the order used to
-resolve states that occur on the same date. An empty character vector applies
-no hierarchy.}
+resolve states that occur on the same date, with earlier entries occurring
+first. An empty character vector applies no hierarchy.}
 }
 \description{
 Helper for consistent documentation of \code{stateHierarchy}.

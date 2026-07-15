@@ -30,12 +30,12 @@ numbered, 1,...,K, with K the number of transitions.}
 individual enters a state.}
 
 \item{censorDate}{Name of the date column in \code{cohort} that identifies the end
-of follow-up. If \code{NULL}, the end of each individual's observation period is
-used.}
+of follow-up, inclusive. If \code{NULL}, the end of each individual's observation
+period is used.}
 
 \item{stateHierarchy}{Character vector of state names in the order used to
-resolve states that occur on the same date. An empty character vector applies
-no hierarchy.}
+resolve states that occur on the same date, with earlier entries occurring
+first. An empty character vector applies no hierarchy.}
 
 \item{stateStep}{Numeric increment used to separate states that occur on the
 same date according to \code{stateHierarchy}.}

@@ -115,10 +115,22 @@ trans <- transMat(
 trans
 ```
 
-You can fit prepare the data in long format (same than [mstate]()) so latter you can fit any other model:
+Some records can occur on the same date. We resolve these ties in their logical
+order, placing death last because it is an absorbing state.
 
-```{r summarise-probabilities}
-msData <- prepareMultistateData(cohort = cdm$my_study, trans = trans)
+```{r}
+stateHierarchy <- c("acetaminophen", "untreated", "death_cohort")
+```
+
+You can prepare the data in the long format used by
+[mstate](https://hputter.github.io/mstate/) and then fit other models:
+
+```{r summarise-probabilities, message=FALSE}
+msData <- prepareMultistateData(
+  cohort = cdm$my_study,
+  trans = trans,
+  stateHierarchy = stateHierarchy
+)
 
 msData |>
   head(10)
@@ -127,9 +139,18 @@ msData |>
 If we are interested in summarising the probabilities over time we can use the
 `summariseMultistateProbabilities` function:
 
-```{r}
-result <- summariseMultistateProbabilities(cohort = cdm$my_study, trans = trans)
+```{r, message=FALSE}
+result <- summariseMultistateProbabilities(
+  cohort = cdm$my_study,
+  trans = trans,
+  stateHierarchy = stateHierarchy
+)
 ```
+
+When run interactively, these functions can print informational (`ℹ`) messages
+about records that were excluded. For example, a person who has a death record
+but never enters an eligible initial state cannot contribute to this analysis.
+These messages describe the input data; they are not R warnings.
 
 ```{r}
 tidy(result)

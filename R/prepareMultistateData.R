@@ -103,10 +103,17 @@ prepareMultistateData <- function(cohort,
     dplyr::group_by(.data$subject_id) |>
     dplyr::summarise(time_0 = min(.data$date_event, na.rm = TRUE), .groups = "drop")
 
-  # keep only records after initial state
+  # eliminate records with no initial state
   n0 <- .numberRecords(allStates)
   allStates <- allStates |>
     dplyr::left_join(time0, by = "subject_id") |>
+    dplyr::filter(!is.na(.data$time_0))
+  nD <- n0 - .numberRecords(allStates)
+  reportIndividuals(nD, "subject has no eligible initial state")
+
+  # keep only records after initial state
+  n0 <- .numberRecords(allStates)
+  allStates <- allStates |>
     dplyr::filter(.data$time_0 <= .data$date_event)
   nD <- n0 - .numberRecords(allStates)
   reportIndividuals(nD, "event occurred before start event")
@@ -121,6 +128,14 @@ prepareMultistateData <- function(cohort,
 
   # update conflicting times
   allStates <- updateTime(allStates, stateHierarchy, stateStep)
+
+  # this is because the hierarchy may have added some time to the last state
+  allStates <- allStates |>
+    dplyr::group_by(.data$subject_id) |>
+    dplyr::mutate(
+      time_censor = max(.data$time_censor, .data$Tstart, na.rm = TRUE)
+    ) |>
+    dplyr::ungroup()
 
   # initial states
   current <- allStates |>
@@ -149,10 +164,15 @@ prepareMultistateData <- function(cohort,
       # state comes after start
       dplyr::filter(.data$Tstart < .data$Tstop) |>
       # state comes before censoring
-      dplyr::filter(.data$Tstop < .data$time_censor) |>
+      dplyr::filter(.data$Tstop <= .data$time_censor) |>
       # subset to first transition
       dplyr::group_by(.data$subject_id) |>
-      dplyr::filter(.data$Tstop == min(.data$Tstop, na.rm = TRUE)) |>
+      dplyr::slice_min(
+        order_by = .data$Tstop,
+        n = 1,
+        with_ties = TRUE,
+        na_rm = TRUE
+      ) |>
       dplyr::ungroup() |>
       dplyr::select("subject_id", "Tstop", state = "to")
 
@@ -179,7 +199,11 @@ prepareMultistateData <- function(cohort,
 
     # active states after transition
     current <- activeTransitons |>
-      dplyr::filter(.data$status == 1, .data$to %in% .env$initialStates) |>
+      dplyr::filter(
+        .data$status == 1,
+        .data$to %in% .env$initialStates,
+        .data$Tstop < .data$time_censor
+      ) |>
       dplyr::select("subject_id", state = "to", Tstart = "Tstop", "time_censor")
 
     msdata[[i]] <- activeTransitons |>
@@ -222,7 +246,7 @@ prepareMultistateData <- function(cohort,
       by = c("subject_id", "state", "Tstart")
     ) |>
     .numberRecords()
-  reportIndividuals(notReached, "transition not allowed")
+  reportIndividuals(notReached, "state is not reachable under the transition matrix")
 
   attr(msdata, "trans") <- trans
   class(msdata) <- c("msdata", "data.frame")
@@ -231,7 +255,7 @@ prepareMultistateData <- function(cohort,
 }
 reportIndividuals <- function(n, reason) {
   if (n > 0) {
-    cli::cli_inform(c("i" = "{.strong {n}} record{?s} not reached due to `{.emph {reason}}`."))
+    cli::cli_inform(c("i" = "{.strong {n}} record{?s} excluded: {.emph {reason}}."))
   }
 }
 checkMultiple <- function(states, iteration = 0) {
@@ -254,7 +278,7 @@ checkMultiple <- function(states, iteration = 0) {
       end <- paste0(" after transition ", iteration)
     }
     message <- paste0("Individuals have multiple ", ini, "states", end, ".")
-    cli::cli_abort(c(x = message, i = "Individuals are not allowed to be in more than one state at the same time. Use the `stateHeriarchy`"))
+    cli::cli_abort(c(x = message, i = "Individuals are not allowed to be in more than one state at the same time. Use `stateHierarchy` to resolve ties."))
   }
   invisible()
 }

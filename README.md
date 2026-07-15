@@ -123,17 +123,22 @@ trans
 #>   death_cohort             NA        NA           NA
 ```
 
-You can fit prepare the data in long format (same than [mstate]()) so
-latter you can fit any other model:
+Some records can occur on the same date. We resolve these ties in their
+logical order, placing death last because it is an absorbing state.
 
 ``` r
-msData <- prepareMultistateData(cohort = cdm$my_study, trans = trans)
-#> ℹ 26 records not reached due to `event occurred before start event`.
-#> Warning: There was 1 warning in `dplyr::filter()`.
-#> ℹ In argument: `.data$Tstop == min(.data$Tstop, na.rm = TRUE)`.
-#> Caused by warning in `min()`:
-#> ! no non-missing arguments to min; returning Inf
-#> ℹ 45 records not reached due to `transition not allowed`.
+stateHierarchy <- c("acetaminophen", "untreated", "death_cohort")
+```
+
+You can prepare the data in the long format used by
+[mstate](https://hputter.github.io/mstate/) and then fit other models:
+
+``` r
+msData <- prepareMultistateData(
+  cohort = cdm$my_study,
+  trans = trans,
+  stateHierarchy = stateHierarchy
+)
 
 msData |>
   head(10)
@@ -143,32 +148,36 @@ msData |>
 #>    subject_id from to trans Tstart Tstop status     from_name      to_name
 #> 1           2    1  2     1      0    60      1 acetaminophen    untreated
 #> 2           2    1  3     2      0    60      0 acetaminophen death_cohort
-#> 3           6    1  2     1      0    33      1 acetaminophen    untreated
-#> 4           6    1  3     2      0    33      0 acetaminophen death_cohort
-#> 5          16    1  2     1      0    30      1 acetaminophen    untreated
-#> 6          16    1  3     2      0    30      0 acetaminophen death_cohort
-#> 7          32    1  2     1      0    30      1 acetaminophen    untreated
-#> 8          32    1  3     2      0    30      0 acetaminophen death_cohort
-#> 9          40    1  2     1      0    30      1 acetaminophen    untreated
-#> 10         40    1  3     2      0    30      0 acetaminophen death_cohort
+#> 3           5    1  2     1      0    20      1 acetaminophen    untreated
+#> 4           5    1  3     2      0    20      0 acetaminophen death_cohort
+#> 5          10    1  2     1      0    30      1 acetaminophen    untreated
+#> 6          10    1  3     2      0    30      0 acetaminophen death_cohort
+#> 7          18    1  2     1      0    10      1 acetaminophen    untreated
+#> 8          18    1  3     2      0    10      0 acetaminophen death_cohort
+#> 9          25    1  2     1      0    30      1 acetaminophen    untreated
+#> 10         25    1  3     2      0    30      0 acetaminophen death_cohort
 ```
 
 If we are interested in summarising the probabilities over time we can
 use the `summariseMultistateProbabilities` function:
 
 ``` r
-result <- summariseMultistateProbabilities(cohort = cdm$my_study, trans = trans)
-#> ℹ 26 records not reached due to `event occurred before start event`.
-#> Warning: There was 1 warning in `dplyr::filter()`.
-#> ℹ In argument: `.data$Tstop == min(.data$Tstop, na.rm = TRUE)`.
-#> Caused by warning in `min()`:
-#> ! no non-missing arguments to min; returning Inf
-#> ℹ 45 records not reached due to `transition not allowed`.
+result <- summariseMultistateProbabilities(
+  cohort = cdm$my_study,
+  trans = trans,
+  stateHierarchy = stateHierarchy
+)
 ```
+
+When run interactively, these functions can print informational (`ℹ`)
+messages about records that were excluded. For example, a person who has
+a death record but never enters an eligible initial state cannot
+contribute to this analysis. These messages describe the input data;
+they are not R warnings.
 
 ``` r
 tidy(result)
-#> # A tibble: 9,384 × 9
+#> # A tibble: 9,552 × 9
 #>    cdm_name  initial_state variable_name      variable_level probability
 #>    <chr>     <chr>         <chr>              <chr>                <dbl>
 #>  1 synpuf-1k overall       prob_acetaminophen 0                    1    
@@ -181,7 +190,7 @@ tidy(result)
 #>  8 synpuf-1k overall       prob_death_cohort  12                   0    
 #>  9 synpuf-1k overall       prob_untreated     12                   0.228
 #> 10 synpuf-1k overall       prob_acetaminophen 13                   0.774
-#> # ℹ 9,374 more rows
+#> # ℹ 9,542 more rows
 #> # ℹ 4 more variables: cohort_table_name <chr>, follow_up_days <chr>,
 #> #   state_hierarchy <chr>, state_step <chr>
 ```
