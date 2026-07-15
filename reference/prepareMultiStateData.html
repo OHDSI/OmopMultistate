@@ -43,8 +43,7 @@
 <span>  eventDate <span class="op">=</span> <span class="st">"cohort_start_date"</span>,</span>
 <span>  censorDate <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  stateHierarchy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  stateStep <span class="op">=</span> <span class="fl">0.01</span>,</span>
-<span>  keepExtraColumns <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  stateStep <span class="op">=</span> <span class="fl">0.01</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -87,11 +86,6 @@ first. An empty character vector applies no hierarchy.</p></dd>
 <dt id="arg-statestep">stateStep<a class="anchor" aria-label="anchor" href="#arg-statestep"></a></dt>
 <dd><p>Numeric increment used to separate states that occur on the
 same date according to <code>stateHierarchy</code>.</p></dd>
-
-
-<dt id="arg-keepextracolumns">keepExtraColumns<a class="anchor" aria-label="anchor" href="#arg-keepextracolumns"></a></dt>
-<dd><p>Logical value indicating whether additional columns
-from <code>cohort</code> should be retained in the prepared multi-state data.</p></dd>
 
 </dl></div>
     <div class="section level2">

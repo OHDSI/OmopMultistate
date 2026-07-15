@@ -11,8 +11,7 @@ prepareMultistateData(
   eventDate = "cohort_start_date",
   censorDate = NULL,
   stateHierarchy = character(),
-  stateStep = 0.01,
-  keepExtraColumns = TRUE
+  stateStep = 0.01
 )
 ```
 
@@ -55,11 +54,6 @@ prepareMultistateData(
 
   Numeric increment used to separate states that occur on the same date
   according to `stateHierarchy`.
-
-- keepExtraColumns:
-
-  Logical value indicating whether additional columns from `cohort`
-  should be retained in the prepared multi-state data.
 
 ## Value
 
