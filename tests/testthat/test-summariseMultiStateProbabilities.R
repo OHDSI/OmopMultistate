@@ -88,3 +88,115 @@ test_that("tied transitions produce valid probabilities", {
     c(2 / 9, 6 / 9, 1 / 9)
   )
 })
+
+test_that("stratified probabilities are estimated for each requested group", {
+  cohort <- dplyr::tibble(
+    subject_id = rep(1:8, each = 3),
+    cohort_definition_id = rep(1:3, times = 8),
+    cohort_start_date = as.Date("2020-01-01") +
+      unlist(lapply(1:8, \(i) c(0, 5 + i, 20 + 2 * i))),
+    cohort_end_date = cohort_start_date,
+    sex = rep(rep(c("Female", "Male"), each = 4), each = 3),
+    age_group = rep(rep(c("young", "old"), times = 4), each = 3)
+  )
+  cdm <- omock::mockCdmFromTables(tables = list(cohort1 = cohort)) |>
+    copyCdm()
+  on.exit(dropCreatedTables(cdm), add = TRUE)
+
+  cdm$cohort1 <- cdm$cohort1 |>
+    CohortConstructor::renameCohort(c("treated", "untreated", "death"))
+  trans <- transMat(
+    x = list(c(2), c(3), c()),
+    names = c("treated", "untreated", "death")
+  )
+
+  result <- summariseMultistateProbabilities(
+    cohort = cdm$cohort1,
+    trans = trans,
+    strata = list("sex", c("sex", "age_group"))
+  ) |>
+    omopgenerics::tidy()
+
+  observedStrata <- result |>
+    dplyr::distinct(.data$sex, .data$age_group)
+  expectedStrata <- dplyr::tribble(
+    ~sex, ~age_group,
+    "overall", "overall",
+    "Female", "overall",
+    "Male", "overall",
+    "Female", "old",
+    "Female", "young",
+    "Male", "old",
+    "Male", "young"
+  )
+  expect_equal(
+    dplyr::arrange(observedStrata, .data$sex, .data$age_group),
+    dplyr::arrange(expectedStrata, .data$sex, .data$age_group)
+  )
+  tolerance <- sqrt(.Machine$double.eps)
+  expect_gte(min(result$probability), -tolerance)
+  expect_lte(max(result$probability), 1 + tolerance)
+})
+
+test_that("strata must be constant within an individual", {
+  strataData <- dplyr::tibble(
+    subject_id = c(1L, 1L, 2L),
+    sex = c("Female", "Male", NA_character_),
+    age_group = c("young", "young", "old")
+  )
+
+  expect_error(
+    getStrataData(strataData, list("sex", "age_group")),
+    regexp = "Multiple values of strata for `sex`"
+  )
+
+  strataData$sex[2] <- "Female"
+  expect_equal(
+    getStrataData(strataData, list("sex"))$sex,
+    c("Female", "Missing")
+  )
+})
+
+test_that("a model failure reports and omits the stratum", {
+  cohort <- dplyr::tibble(
+    subject_id = rep(1:8, each = 3),
+    cohort_definition_id = rep(1:3, times = 8),
+    cohort_start_date = as.Date("2020-01-01") +
+      unlist(lapply(1:8, \(i) c(0, 5 + i, 20 + 2 * i))),
+    cohort_end_date = cohort_start_date,
+    sex = rep(rep(c("Female", "Male"), each = 4), each = 3)
+  )
+  cdm <- omock::mockCdmFromTables(tables = list(cohort1 = cohort)) |>
+    copyCdm()
+  on.exit(dropCreatedTables(cdm), add = TRUE)
+
+  cdm$cohort1 <- cdm$cohort1 |>
+    CohortConstructor::renameCohort(c("treated", "untreated", "death"))
+  trans <- transMat(
+    x = list(c(2), c(3), c()),
+    names = c("treated", "untreated", "death")
+  )
+
+  originalExtractProbabilities <- extractProbabilities
+  testthat::local_mocked_bindings(
+    extractProbabilities = function(x, trans, followUp, start) {
+      if (identical(unique(x$sex), "Male")) {
+        stop("deliberate model failure")
+      }
+      originalExtractProbabilities(x, trans, followUp, start)
+    },
+    .package = "OmopMultistate"
+  )
+
+  expect_message(
+    result <- summariseMultistateProbabilities(
+      cohort = cdm$cohort1,
+      trans = trans,
+      strata = list("sex")
+    ),
+    regexp = "sex = Male",
+    fixed = TRUE
+  )
+  result <- omopgenerics::tidy(result)
+  expect_setequal(unique(result$sex), c("overall", "Female"))
+})

@@ -7,7 +7,6 @@
 #' @inheritParams censorDateDoc
 #' @inheritParams stateHierarchyDoc
 #' @inheritParams stateStepDoc
-#' @inheritParams keepExtraColumnsDoc
 #'
 #' @returns An `msdata` object to be used by the `mstate` package.
 #'
@@ -18,14 +17,12 @@ prepareMultistateData <- function(cohort,
                                   eventDate = "cohort_start_date",
                                   censorDate = NULL,
                                   stateHierarchy = character(),
-                                  stateStep = 0.01,
-                                  keepExtraColumns = TRUE) {
+                                  stateStep = 0.01) {
   # initial validations
   cohort <- omopgenerics::validateCohortArgument(cohort)
   validateTrans(trans)
   omopgenerics::validateColumn(eventDate, cohort, type = "date")
   omopgenerics::validateColumn(censorDate, cohort, type = "date", null = TRUE)
-  omopgenerics::assertLogical(keepExtraColumns)
 
   cdm <- omopgenerics::cdmReference(cohort)
 

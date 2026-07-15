@@ -10,8 +10,7 @@ prepareMultistateData(
   eventDate = "cohort_start_date",
   censorDate = NULL,
   stateHierarchy = character(),
-  stateStep = 0.01,
-  keepExtraColumns = TRUE
+  stateStep = 0.01
 )
 }
 \arguments{
@@ -39,9 +38,6 @@ first. An empty character vector applies no hierarchy.}
 
 \item{stateStep}{Numeric increment used to separate states that occur on the
 same date according to \code{stateHierarchy}.}
-
-\item{keepExtraColumns}{Logical value indicating whether additional columns
-from \code{cohort} should be retained in the prepared multi-state data.}
 }
 \value{
 An \code{msdata} object to be used by the \code{mstate} package.
