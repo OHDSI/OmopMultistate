@@ -15,7 +15,7 @@ Imports:
     clock,
     dplyr,
     mstate,
-    omopgenerics,
+    omopgenerics (>= 1.4.0),
     PatientProfiles,
     purrr,
     rlang,

@@ -110,7 +110,8 @@ extractProbabilities <- function(x, trans, followUp, start) {
   # cox
   cox <- survival::coxph(
     survival::Surv(Tstart, Tstop, status) ~ survival::strata(trans) + survival::cluster(subject_id),
-    data = x
+    data = x,
+    ties = "breslow"
   )
   msf <- mstate::msfit(cox, trans = trans)
   probs <- mstate::probtrans(msf, predt = 0)

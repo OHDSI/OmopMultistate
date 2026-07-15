@@ -66,61 +66,83 @@ The following example uses a small mock OMOP CDM containing three states:
 
 ```{r example-data, message=FALSE}
 library(OmopMultistate)
+library(omock)
 
-cdm <- omock::mockCdmFromTables(
-  tables = list(
-    cohort = dplyr::tibble(
-      cohort_definition_id = c(1L, 1L, 1L, 2L, 2L, 3L),
-      subject_id = 1L,
-      cohort_start_date = as.Date("2020-01-01") +
-        c(0L, 100L, 120L, 50L, 110L, 150L),
-      cohort_end_date = cohort_start_date
-    )
-  )
-)
+cdm <- mockCdmFromDataset(datasetName = "synpuf-1k", source = "duckdb")
 
-cdm$cohort <- CohortConstructor::renameCohort(
-  cohort = cdm$cohort,
-  newCohortName = c("treated", "untreated", "death")
-)
 ```
 
-Define the allowed transitions. Here, individuals can move between treatment
-states or from either treatment state to death; no transitions out of death are
-allowed.
+First we will do the simplest possible case, we analyse discontinuation of 
+**acetaminophen**. So we will create 3 cohorts: acetaminophen, discontinuation
+of acetaminophen (untreated) and death. We will use [CohortConstructor]() to
+create the cohorts.
+
+```{r}
+library(CohortConstructor)
+library(CodelistGenerator)
+
+codes <- getDrugIngredientCodes(cdm = cdm, name = "acetaminophen", nameStyle = "{concept_name}")
+
+# acetaminophen cohort
+cdm$acetaminophen <- conceptCohort(cdm = cdm, conceptSet = codes, name = "acetaminophen")
+
+# death cohort
+cdm$death_cohort <- deathCohort(cdm = cdm, name = "death_cohort")
+
+# untreated cohort
+cdm$untreated <- cdm$acetaminophen |>
+  padCohortEnd(days = 1L, name = "untreated") |>
+  padCohortDate(days = 0L, indexDate = "cohort_end_date", cohortDate = "cohort_start_date") |>
+  renameCohort("untreated")
+
+# bind them together
+cdm <- bind(cdm$acetaminophen, cdm$death_cohort, cdm$untreated, name = "my_study")
+```
+
+Now we will focus on defining the transitions, the individuals can move from:
+
+- `acetaminophen` to `untreated`
+- `acetaminophen` to `death_cohort`
+- `untreated` to `acetaminophen`
+- `untreated` to `death_cohort`
 
 ```{r transition-matrix}
 trans <- transMat(
   x = list(c(2, 3), c(1, 3), c()),
-  names = c("treated", "untreated", "death")
+  names = c("acetaminophen", "untreated", "death_cohort")
 )
 
 trans
 ```
 
-Estimate state occupation probabilities over the observed follow-up:
+You can fit prepare the data in long format (same than [mstate]()) so latter you can fit any other model:
 
 ```{r summarise-probabilities}
-result <- summariseMultistateProbabilities(
-  cohort = cdm$cohort,
-  trans = trans
-)
+msData <- prepareMultistateData(cohort = cdm$my_study, trans = trans)
 
-result |>
-  omopgenerics::tidy() |>
-  dplyr::select(
-    "initial_state", "variable_name", "variable_level", "probability"
-  ) |>
-  dplyr::slice_head(n = 10)
+msData |>
+  head(10)
 ```
 
-The result can be displayed as stacked state occupation probabilities over
-time:
+If we are interested in summarising the probabilities over time we can use the
+`summariseMultistateProbabilities` function:
+
+```{r}
+result <- summariseMultistateProbabilities(cohort = cdm$my_study, trans = trans)
+```
+
+```{r}
+tidy(result)
+```
+
+You can visualise now the results:
 
 ```{r plot-probabilities, fig.width=8, fig.height=5}
-plotMultistateProbabilities(result)
+result |>
+  filterGroup(initial_state == "acetaminophen") |>
+  plotMultistateProbabilities()
 ```
 
 ```{r cleanup, include=FALSE}
-omopgenerics::cdmDisconnect(cdm)
+cdmDisconnect(cdm)
 ```
