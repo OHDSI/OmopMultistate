@@ -61,13 +61,39 @@ summariseMultistateProbabilities <- function(cohort,
         dplyr::group_split() |>
         as.list() |>
         purrr::map(\(ms) {
-          start <- startingProbabilities(ms, trans)
-          extractProbabilities(ms, trans, followUpDays, start) |>
-            dplyr::cross_join(
-              ms |>
-                dplyr::select(dplyr::any_of(st)) |>
-                dplyr::distinct()
-            )
+          strataValues <- ms |>
+            dplyr::select(dplyr::any_of(st)) |>
+            dplyr::distinct()
+          strataLabel <- if (length(st) == 0) {
+            "overall"
+          } else {
+            paste0(st, " = ", unlist(strataValues[1, st]), collapse = ", ")
+          }
+
+          tryCatch(
+            {
+              start <- startingProbabilities(ms, trans)
+              extractProbabilities(ms, trans, followUpDays, start) |>
+                dplyr::cross_join(strataValues)
+            },
+            error = function(cnd) {
+              cli::cli_inform(
+                c(
+                  i = "No probabilities were estimated for stratum {.val {strataLabel}}.",
+                  i = "Underlying error: {conditionMessage(cnd)}"
+                )
+              )
+              dplyr::bind_cols(
+                dplyr::tibble(
+                  variable_level = character(),
+                  variable_name = character(),
+                  probability = numeric(),
+                  initial_state = character()
+                ),
+                strataValues[0, , drop = FALSE]
+              )
+            }
+          )
         }) |>
         dplyr::bind_rows()
     }) |>
