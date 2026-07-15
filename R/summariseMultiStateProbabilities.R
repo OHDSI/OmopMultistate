@@ -172,13 +172,19 @@ getStrataData <- function(x, strata) {
   x <- x |>
     dplyr::select("subject_id", dplyr::all_of(strataCols)) |>
     dplyr::distinct() |>
-    dplyr::collect()
+    dplyr::collect() |>
+    dplyr::mutate(dplyr::across(
+      dplyr::all_of(strataCols),
+      \(val) dplyr::coalesce(as.character(val), "Missing")
+    ))
   strataError <- strataCols |>
     purrr::keep(\(st) {
       x |>
         dplyr::group_by(.data$subject_id) |>
         dplyr::filter(dplyr::n_distinct(.data[[st]]) > 1) |>
-        dplyr::tally() > 0
+        dplyr::ungroup() |>
+        dplyr::tally() |>
+        dplyr::pull() > 0
     })
   if (length(strataError) > 0) {
     cli::cli_abort(c(x = "Multiple values of strata for {.var {strataError}}. Strata has to be unique for each subject_id."))
