@@ -27,8 +27,8 @@ Model](https://ohdsi.github.io/Tidy-R-programming-with-OMOP/) book.
 
 | Source | Driver | CDM reference | Status |
 |----|----|----|----|
-| Local R data frame | N/A | [`omopgenerics::cdmFromTables()`](https://darwin-eu.github.io/omopgenerics/reference/cdmFromTables.html) | ![](https://img.shields.io/github/actions/workflow/status/oxford-pharmacoepi/OmopMultistate/test-weekly.yaml?branch=main&job=local-omopgenerics) |
-| In-memory DuckDB database | duckdb | [`CDMConnector::cdmFromCon()`](https://darwin-eu.github.io/CDMConnector/reference/cdmFromCon.html) | ![](https://img.shields.io/github/actions/workflow/status/oxford-pharmacoepi/OmopMultistate/test-weekly.yaml?branch=main&job=duckdb-CDMConnector) |
+| Local R data frame | N/A | [`omopgenerics::cdmFromTables()`](https://darwin-eu.github.io/omopgenerics/reference/cdmFromTables.html) | [![](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=local-omopgenerics)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
+| In-memory DuckDB database | duckdb | [`CDMConnector::cdmFromCon()`](https://darwin-eu.github.io/CDMConnector/reference/cdmFromCon.html) | [![](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=duckdb-CDMConnector)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
 
 ## Installation
 
@@ -38,7 +38,7 @@ You can install the development version of OmopMultistate from
 ``` r
 
 # install.packages("pak")
-pak::pak("oxford-pharmacoepi/OmopMultistate")
+pak::pak("OHDSI/OmopMultistate")
 ```
 
 ## Example
