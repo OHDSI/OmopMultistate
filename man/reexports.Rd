@@ -4,6 +4,12 @@
 \name{reexports}
 \alias{reexports}
 \alias{transMat}
+\alias{tidy}
+\alias{filterGroup}
+\alias{filterStrata}
+\alias{filterAdditional}
+\alias{filterSettings}
+\alias{filterResult}
 \title{Objects exported from other packages}
 \keyword{internal}
 \description{
@@ -12,5 +18,7 @@ below to see their documentation.
 
 \describe{
   \item{mstate}{\code{\link[mstate]{transMat}}}
+
+  \item{omopgenerics}{\code{\link[omopgenerics]{filterAdditional}}, \code{\link[omopgenerics]{filterGroup}}, \code{\link[omopgenerics]{filterResult}}, \code{\link[omopgenerics]{filterSettings}}, \code{\link[omopgenerics]{filterStrata}}, \code{\link[omopgenerics:reexports]{tidy}}}
 }}
 
