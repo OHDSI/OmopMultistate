@@ -56,5 +56,77 @@ A \verb{<summarised_result>} object with result_type =
 probabilities.
 }
 \description{
-Summarise Multi-State Occupation Probabilities over time
+The function fits internally a \code{msdata} dataset using the
+\code{prepareMultistateData()} function and later fits a \code{survival::coxph()} and
+\code{mstate::msfit()} to extract the probabilities over time. Probabilities are
+extracted by initial state and overall. The result can be stratified using
+the \code{strata} argument that must be constant for each individual.
+}
+\details{
+The result is formatted into a \code{summarised_result} object and it can be
+plotted using the \code{plotMultistateProbabilities()}.
+}
+\examples{
+library(CohortConstructor)
+library(dplyr)
+library(omock)
+library(OmopMultistate)
+
+cdm <- mockCdmFromDataset(datasetName = "GiBleed")
+
+# An illustrative concept set: aspirin 81 mg oral tablets.
+# Keep the first treatment episode for each person.
+cdm$treated <- conceptCohort(
+  cdm = cdm,
+  conceptSet = list(treated = 19059056L),
+  name = "treated"
+) |>
+  requireIsFirstEntry()
+
+# Enter the untreated state the day after treatment ends. Require that day
+# to be within observation, so loss to follow-up is not a discontinuation.
+cdm$untreated <- cdm$treated |>
+  padCohortEnd(days = 1L, requireFullContribution = TRUE, name = "untreated") |>
+  padCohortDate(
+    days = 0L,
+    indexDate = "cohort_end_date",
+    cohortDate = "cohort_start_date"
+  ) |>
+  renameCohort("untreated")
+cdm <- bind(cdm$treated, cdm$untreated, name = "states")
+
+# Model first discontinuation: untreated is an absorbing state.
+# Matrix state names must match the cohort names.
+trans <- transMat(
+  x = list(2, integer()),
+  names = c("treated", "untreated")
+)
+
+# Estimate probabilities during the first year, overall and by initial state.
+result <- summariseMultistateProbabilities(
+  cohort = cdm$states,
+  trans = trans,
+  followUpDays = 365,
+  stateHierarchy = c("treated", "untreated")
+)
+tidy(result) |>
+  head()
+
+# Sex is constant within each person and can be used for stratification.
+cdm$states <- PatientProfiles::addSex(cdm$states)
+bySex <- summariseMultistateProbabilities(
+  cohort = cdm$states,
+  trans = trans,
+  strata = list("sex"),
+  followUpDays = 365,
+  stateHierarchy = c("treated", "untreated")
+)
+bySex |>
+  filterGroup(initial_state == "treated") |>
+  filterStrata(sex == "Female") |>
+  tidy() |>
+  head()
+
+cdmDisconnect(cdm)
+
 }

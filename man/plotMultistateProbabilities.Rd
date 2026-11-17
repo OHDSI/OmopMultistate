@@ -26,3 +26,61 @@ time.
 Plot Multi-State Occupation Probabilities extracted by
 \code{summariseMultistateProbabilities()}
 }
+\examples{
+library(CohortConstructor)
+library(dplyr)
+library(omock)
+library(OmopMultistate)
+
+cdm <- mockCdmFromDataset(datasetName = "GiBleed")
+
+# An illustrative concept set: aspirin 81 mg oral tablets.
+# Keep the first treatment episode for each person.
+cdm$treated <- conceptCohort(
+  cdm = cdm,
+  conceptSet = list(treated = 19059056L),
+  name = "treated"
+) |>
+  requireIsFirstEntry()
+
+# Enter the untreated state the day after treatment ends. Require that day
+# to be within observation, so loss to follow-up is not a discontinuation.
+cdm$untreated <- cdm$treated |>
+  padCohortEnd(days = 1L, requireFullContribution = TRUE, name = "untreated") |>
+  padCohortDate(
+    days = 0L, indexDate = "cohort_end_date", cohortDate = "cohort_start_date"
+  ) |>
+  renameCohort("untreated")
+cdm <- bind(cdm$treated, cdm$untreated, name = "states")
+
+# Model first discontinuation: untreated is an absorbing state.
+# Matrix state names must match the cohort names.
+trans <- transMat(
+  x = list(2, integer()),
+  names = c("treated", "untreated")
+)
+
+cdm$states <- PatientProfiles::addSex(cdm$states)
+result <- summariseMultistateProbabilities(
+  cohort = cdm$states,
+  trans = trans,
+  strata = list("sex"),
+  followUpDays = 365,
+  stateHierarchy = c("treated", "untreated")
+)
+
+# Show the overall probabilities for people starting treatment.
+result |>
+  filterGroup(initial_state == "treated") |>
+  filterStrata(sex == "overall") |>
+  plotMultistateProbabilities()
+
+# Compare the sex strata in separate panels, with time displayed in years.
+result |>
+  filterGroup(initial_state == "treated") |>
+  filterStrata(sex != "overall") |>
+  plotMultistateProbabilities(timeScale = "years")
+
+cdmDisconnect(cdm)
+
+}
