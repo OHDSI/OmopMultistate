@@ -7,15 +7,21 @@ export(filterSettings)
 export(filterStrata)
 export(plotMultistateProbabilities)
 export(prepareMultistateData)
+export(settings)
 export(summariseMultistateProbabilities)
 export(tidy)
 export(transMat)
 importFrom(mstate,transMat)
-importFrom(omopgenerics,filterAdditional)
-importFrom(omopgenerics,filterGroup)
-importFrom(omopgenerics,filterResult)
-importFrom(omopgenerics,filterSettings)
-importFrom(omopgenerics,filterStrata)
-importFrom(omopgenerics,tidy)
-importFrom(rlang,.data)
-importFrom(rlang,.env)
+importFrom(omopgenerics,
+  filterAdditional,
+  filterGroup,
+  filterResult,
+  filterSettings,
+  filterStrata,
+  settings,
+  tidy
+)
+importFrom(rlang,
+  .data,
+  .env
+)

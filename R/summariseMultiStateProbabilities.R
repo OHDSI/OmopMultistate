@@ -119,7 +119,10 @@ summariseMultistateProbabilities <- function(cohort,
         "result_type", "package_name", "package_version", "follow_up_days",
         "cohort_table_name", "state_hierarchy", "state_step"
       )
-    )
+    ) |>
+    addTransToSettings(trans = trans)
+
+  attr(result, "ms_data") <- msData
 
   return(result)
 }
@@ -215,6 +218,21 @@ getStrataData <- function(x, strata) {
   if (length(strataError) > 0) {
     cli::cli_abort(c(x = "Multiple values of strata for {.var {strataError}}. Strata has to be unique for each subject_id."))
   }
+  return(x)
+}
+addTransToSettings <- function(x, trans) {
+  transitions <- trans |>
+    as.data.frame() |>
+    dplyr::mutate(from = rownames(trans)) |>
+    tidyr::pivot_longer(!"from", names_to = "to", values_to = "trans") |>
+    dplyr::filter(!is.na(.data$trans)) |>
+    dplyr::arrange(.data$from, .data$to) |>
+    purrr::pmap(\(from, to, ...) {
+      paste0(from, "->", to)
+    }) |>
+    paste0(collapse = "; ")
+  attr(x, "settings") <- attr(x, "settings") |>
+    dplyr::mutate(transitions = transitions)
   return(x)
 }
 

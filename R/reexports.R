@@ -7,6 +7,10 @@ mstate::transMat
 #' @export
 omopgenerics::tidy
 
+#' @importFrom omopgenerics settings
+#' @export
+omopgenerics::settings
+
 #' @importFrom omopgenerics filterGroup
 #' @export
 omopgenerics::filterGroup
