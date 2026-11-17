@@ -23,29 +23,64 @@ trans should be an S x S matrix, with (i,j)-element a positive integer if a
 transition from i to j is possible in the multi-state model, NA otherwise. In
 particular, all diagonal elements should be NA. The integers indicating the
 possible transitions in the multi-state model should be sequentially
-numbered, 1,...,K, with K the number of transitions.}
+numbered, 1,...,K, with K the number of transitions. Row and column names
+must be identical, unique state names in the same order. A row containing
+only \code{NA} defines an absorbing state. Use \code{\link[=transMat]{transMat()}} to build a matrix.}
 
 \item{eventDate}{Name of the date column in \code{cohort} that identifies when an
-individual enters a state.}
+individual enters a state. State entries are defined by these dates;
+reaching \code{cohort_end_date} does not automatically create a state change.}
 
 \item{censorDate}{Name of the date column in \code{cohort} that identifies the end
 of follow-up, inclusive. If \code{NULL}, the end of each individual's observation
-period is used.}
+period is used. Missing values in a supplied column also fall back to the
+observation period end. Supplied dates replace the observation-based dates;
+they are not automatically capped at observation end. Use the same date on
+all state records for a person when specifying a single follow-up endpoint.}
 
 \item{stateHierarchy}{Character vector of state names in the order used to
 resolve states that occur on the same date, with earlier entries occurring
-first. An empty character vector applies no hierarchy.}
+first. An empty character vector applies no hierarchy; unresolved ties
+between competing states cause an error. Include all states that need a
+distinct order. Unlisted states share the priority of the last listed state.}
 
 \item{stateStep}{Numeric increment used to separate states that occur on the
-same date according to \code{stateHierarchy}.}
+same date according to \code{stateHierarchy}, in days. Successive priority ranks
+are shifted by multiples of this increment. The default is \code{0.01} days.}
 }
 \value{
-An \code{msdata} object to be used by the \code{mstate} package.
+An \code{msdata} data frame with one row per possible outgoing transition
+for each interval at risk. Columns include \code{subject_id}, integer state
+identifiers \code{from} and \code{to}, transition identifier \code{trans}, elapsed days
+\code{Tstart} and \code{Tstop}, and \code{status} (\code{1} for the observed transition, \code{0}
+otherwise). \code{from_name} and \code{to_name} contain the state names. The transition
+matrix is retained in the \code{trans} attribute.
 }
 \description{
-This function prepares an \code{msdata} formatted data to conduct multistate
-analyses. The output of the function can be feed to survival models like
-cox proportional hazards model.
+Convert cohort-defined state entries into counting-process data for
+multi-state survival models using the \code{survival} and \code{mstate} packages.
+}
+\details{
+Time zero is each person's earliest entry into a state with at least one
+outgoing transition. People recorded only in absorbing states cannot enter
+the analysis. At each step, the earliest subsequent entry permitted by
+\code{trans} determines the next state. Repeated visits are supported when the
+matrix permits returning to a previous state. Cohort end dates alone do not
+create exits; provide a cohort for each destination state.
+
+Events on the censor date are included. After records beyond their censor
+dates are removed, the latest remaining censor date for each person is used
+for their trajectory. If \code{stateHierarchy} shifts a same-day event beyond
+that date, follow-up is extended to include the shifted event.
+
+Informational messages report excluded records: events after censoring,
+people without an eligible initial state, events before time zero, and
+states that cannot be reached under \code{trans}. Counts refer to records,
+rather than distinct people. Remaining simultaneous competing states cause
+an error; use \code{stateHierarchy} to order them.
+
+State records are collected into R for processing, including when \code{cohort}
+is stored in a database.
 }
 \examples{
 library(CohortConstructor)
@@ -98,4 +133,7 @@ msData |>
 
 cdmDisconnect(cdm)
 
+}
+\seealso{
+\code{\link[=summariseMultistateProbabilities]{summariseMultistateProbabilities()}}, \code{\link[=transMat]{transMat()}}
 }

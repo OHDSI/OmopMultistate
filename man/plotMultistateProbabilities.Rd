@@ -2,8 +2,7 @@
 % Please edit documentation in R/summariseMultiStateProbabilities.R
 \name{plotMultistateProbabilities}
 \alias{plotMultistateProbabilities}
-\title{Plot Multi-State Occupation Probabilities extracted by
-\code{summariseMultistateProbabilities()}}
+\title{Plot Multi-State Occupation Probabilities}
 \usage{
 plotMultistateProbabilities(result, style = NULL, timeScale = "days")
 }
@@ -16,15 +15,26 @@ the name of a built-in style, a path to a YAML style file, or \code{NULL} to use
 the default style.}
 
 \item{timeScale}{Character string specifying the time scale of the x-axis:
-either \code{"days"} or \code{"years"}.}
+either \code{"days"} or \code{"years"}. Years are calculated as days divided by
+\code{365.25}; this changes only the plot axis.}
 }
 \value{
-A ggplot2 object with the visualisation of the probabilities over
-time.
+A \code{ggplot2} plot that can be customised with additional layers,
+labels, or themes.
 }
 \description{
-Plot Multi-State Occupation Probabilities extracted by
-\code{summariseMultistateProbabilities()}
+Display the probabilities from \code{\link[=summariseMultistateProbabilities]{summariseMultistateProbabilities()}} as
+stacked step areas, with state occupation shown as percentages.
+}
+\details{
+States are stacked in transition-matrix order. Varying result columns,
+including initial states, strata, and analysis settings, create separate
+panels. Use \code{\link[=filterGroup]{filterGroup()}} and \code{\link[=filterStrata]{filterStrata()}} before plotting to select
+the initial states and populations to display. Keep all destination states
+when displaying the complete probability distribution.
+
+Plotting requires the suggested packages \code{visOmopResults}, \code{ggplot2}, and
+\code{scales}.
 }
 \examples{
 library(CohortConstructor)
@@ -83,4 +93,8 @@ result |>
 
 cdmDisconnect(cdm)
 
+}
+\seealso{
+\code{\link[=summariseMultistateProbabilities]{summariseMultistateProbabilities()}}, \code{\link[=filterGroup]{filterGroup()}},
+\code{\link[=filterStrata]{filterStrata()}}, \code{\link[visOmopResults:themeVisOmop]{visOmopResults::themeVisOmop()}}
 }

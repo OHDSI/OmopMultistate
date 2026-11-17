@@ -5,7 +5,8 @@
 \title{Helper for consistent documentation of \code{eventDate}.}
 \arguments{
 \item{eventDate}{Name of the date column in \code{cohort} that identifies when an
-individual enters a state.}
+individual enters a state. State entries are defined by these dates;
+reaching \code{cohort_end_date} does not automatically create a state change.}
 }
 \description{
 Helper for consistent documentation of \code{eventDate}.

@@ -1,14 +1,9 @@
 
 #' Summarise Multi-State Occupation Probabilities over time
 #'
-#' The function fits internally a `msdata` dataset using the
-#' `prepareMultistateData()` function and later fits a `survival::coxph()` and
-#' `mstate::msfit()` to extract the probabilities over time. Probabilities are
-#' extracted by initial state and overall. The result can be stratified using
-#' the `strata` argument that must be constant for each individual.
-#'
-#' The result is formatted into a `summarised_result` object and it can be
-#' plotted using the `plotMultistateProbabilities()`.
+#' Prepare state transitions with [prepareMultistateData()], estimate state
+#' occupation probabilities, and return a standard `summarised_result` for
+#' inspection or plotting with [plotMultistateProbabilities()].
 #'
 #' @inheritParams cohortDoc
 #' @inheritParams transDoc
@@ -19,9 +14,40 @@
 #' @inheritParams stateHierarchyDoc
 #' @inheritParams stateStepDoc
 #'
-#' @returns A `<summarised_result>` object with result_type =
-#' "summarise_multistate_probabilities" that contains the multistate
-#' probabilities.
+#' @details
+#' Each model uses [survival::coxph()] with a separate baseline hazard for each
+#' transition, clustering by person, and Breslow handling of tied event times.
+#' [mstate::msfit()] and [mstate::probtrans()] then estimate state occupation
+#' probabilities from time zero. Time zero, censoring, and exclusions follow
+#' [prepareMultistateData()].
+#'
+#' Results are provided conditional on each initial state, together with an
+#' overall estimate weighted by the observed distribution of initial states in
+#' that model's population. When strata are requested, this is repeated within
+#' each stratum, alongside the unstratified analysis. If fitting fails for a
+#' stratum, an informational message identifies it and the underlying error;
+#' that stratum contributes no probability rows.
+#'
+#' Time points are those returned by the fitted model, including time zero,
+#' restricted to `followUpDays`. A row at exactly `followUpDays` is not
+#' guaranteed. Confidence intervals are not included in the returned result.
+#'
+#' @returns A `summarised_result` with result type
+#' `"summarise_multistate_probabilities"`. Use [tidy()] to obtain columns:
+#'
+#' - `initial_state`: the conditioning state, or `"overall"` for the weighted
+#'   estimate;
+#' - `variable_name`: `"prob_"` followed by the destination state name;
+#' - `variable_level`: elapsed days since time zero, stored as character;
+#' - `probability`: state occupation probability on a scale from zero to one;
+#' - requested strata columns, with `"overall"` for unstratified results.
+#'
+#' [settings()] contains analysis settings, including the permitted transitions
+#' and follow-up horizon. The `ms_data` attribute contains the prepared data
+#' used for fitting, with any requested strata columns.
+#'
+#' @seealso [prepareMultistateData()], [plotMultistateProbabilities()],
+#'   [filterGroup()], [filterStrata()]
 #'
 #' @export
 #'
@@ -308,15 +334,30 @@ addTransToSettings <- function(x, trans) {
   return(x)
 }
 
-#' Plot Multi-State Occupation Probabilities extracted by
-#' `summariseMultistateProbabilities()`
+#' Plot Multi-State Occupation Probabilities
+#'
+#' Display the probabilities from [summariseMultistateProbabilities()] as
+#' stacked step areas, with state occupation shown as percentages.
+#'
+#' @details
+#' States are stacked in transition-matrix order. Varying result columns,
+#' including initial states, strata, and analysis settings, create separate
+#' panels. Use [filterGroup()] and [filterStrata()] before plotting to select
+#' the initial states and populations to display. Keep all destination states
+#' when displaying the complete probability distribution.
+#'
+#' Plotting requires the suggested packages `visOmopResults`, `ggplot2`, and
+#' `scales`.
 #'
 #' @inheritParams resultDoc
 #' @inheritParams styleDoc
 #' @inheritParams timeScaleDoc
 #'
-#' @returns A ggplot2 object with the visualisation of the probabilities over
-#' time.
+#' @returns A `ggplot2` plot that can be customised with additional layers,
+#' labels, or themes.
+#'
+#' @seealso [summariseMultistateProbabilities()], [filterGroup()],
+#'   [filterStrata()], [visOmopResults::themeVisOmop()]
 #'
 #' @export
 #'

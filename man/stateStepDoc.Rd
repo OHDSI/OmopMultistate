@@ -5,7 +5,8 @@
 \title{Helper for consistent documentation of \code{stateStep}.}
 \arguments{
 \item{stateStep}{Numeric increment used to separate states that occur on the
-same date according to \code{stateHierarchy}.}
+same date according to \code{stateHierarchy}, in days. Successive priority ranks
+are shifted by multiples of this increment. The default is \code{0.01} days.}
 }
 \description{
 Helper for consistent documentation of \code{stateStep}.

@@ -1,9 +1,8 @@
 
 #' Prepare Multi-State Data from an OMOP Cohort Table
 #'
-#' This function prepares an `msdata` formatted data to conduct multistate
-#' analyses. The output of the function can be feed to survival models like
-#' cox proportional hazards model.
+#' Convert cohort-defined state entries into counting-process data for
+#' multi-state survival models using the `survival` and `mstate` packages.
 #'
 #' @inheritParams cohortDoc
 #' @inheritParams transDoc
@@ -12,7 +11,36 @@
 #' @inheritParams stateHierarchyDoc
 #' @inheritParams stateStepDoc
 #'
-#' @returns An `msdata` object to be used by the `mstate` package.
+#' @details
+#' Time zero is each person's earliest entry into a state with at least one
+#' outgoing transition. People recorded only in absorbing states cannot enter
+#' the analysis. At each step, the earliest subsequent entry permitted by
+#' `trans` determines the next state. Repeated visits are supported when the
+#' matrix permits returning to a previous state. Cohort end dates alone do not
+#' create exits; provide a cohort for each destination state.
+#'
+#' Events on the censor date are included. After records beyond their censor
+#' dates are removed, the latest remaining censor date for each person is used
+#' for their trajectory. If `stateHierarchy` shifts a same-day event beyond
+#' that date, follow-up is extended to include the shifted event.
+#'
+#' Informational messages report excluded records: events after censoring,
+#' people without an eligible initial state, events before time zero, and
+#' states that cannot be reached under `trans`. Counts refer to records,
+#' rather than distinct people. Remaining simultaneous competing states cause
+#' an error; use `stateHierarchy` to order them.
+#'
+#' State records are collected into R for processing, including when `cohort`
+#' is stored in a database.
+#'
+#' @returns An `msdata` data frame with one row per possible outgoing transition
+#' for each interval at risk. Columns include `subject_id`, integer state
+#' identifiers `from` and `to`, transition identifier `trans`, elapsed days
+#' `Tstart` and `Tstop`, and `status` (`1` for the observed transition, `0`
+#' otherwise). `from_name` and `to_name` contain the state names. The transition
+#' matrix is retained in the `trans` attribute.
+#'
+#' @seealso [summariseMultistateProbabilities()], [transMat()]
 #'
 #' @export
 #'
