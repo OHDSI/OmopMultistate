@@ -9,7 +9,9 @@ of follow-up, inclusive. If \code{NULL}, the end of each individual's observatio
 period is used. Missing values in a supplied column also fall back to the
 observation period end. Supplied dates replace the observation-based dates;
 they are not automatically capped at observation end. Use the same date on
-all state records for a person when specifying a single follow-up endpoint.}
+all state records for a person when specifying a single follow-up endpoint.
+Individuals with no follow-up after their index date are excluded from the
+analysis.}
 }
 \description{
 Helper for consistent documentation of \code{censorDate}.

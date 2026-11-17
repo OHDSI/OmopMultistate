@@ -36,7 +36,9 @@ of follow-up, inclusive. If \code{NULL}, the end of each individual's observatio
 period is used. Missing values in a supplied column also fall back to the
 observation period end. Supplied dates replace the observation-based dates;
 they are not automatically capped at observation end. Use the same date on
-all state records for a person when specifying a single follow-up endpoint.}
+all state records for a person when specifying a single follow-up endpoint.
+Individuals with no follow-up after their index date are excluded from the
+analysis.}
 
 \item{stateHierarchy}{Character vector of state names in the order used to
 resolve states that occur on the same date, with earlier entries occurring
@@ -70,12 +72,14 @@ create exits; provide a cohort for each destination state.
 
 Events on the censor date are included. After records beyond their censor
 dates are removed, the latest remaining censor date for each person is used
-for their trajectory. If \code{stateHierarchy} shifts a same-day event beyond
-that date, follow-up is extended to include the shifted event.
+for their trajectory. People with no follow-up after time zero are excluded
+before applying \code{stateHierarchy}. If the hierarchy shifts a same-day event
+beyond the censor date, follow-up is extended to include the shifted event.
 
 Informational messages report excluded records: events after censoring,
-people without an eligible initial state, events before time zero, and
-states that cannot be reached under \code{trans}. Counts refer to records,
+people without an eligible initial state, events before time zero,
+people with no follow-up after time zero, and states that cannot be reached
+under \code{trans}. Counts refer to records,
 rather than distinct people. Remaining simultaneous competing states cause
 an error; use \code{stateHierarchy} to order them.
 

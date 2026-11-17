@@ -89,6 +89,56 @@ test_that("censorDate can refer to a column named censor_date", {
   expect_equal(msdata$status, c(0, 1, 0, 0))
 })
 
+test_that("excluding all subjects with no follow-up returns empty multistate data", {
+  cdm <- omock::mockCdmFromTables(tables = list(
+    cohort = dplyr::tibble(
+      cohort_definition_id = 1:2,
+      subject_id = 1L,
+      cohort_start_date = as.Date("2020-01-01"),
+      cohort_end_date = cohort_start_date
+    ),
+    observation_period = dplyr::tibble(
+      observation_period_id = 1L,
+      person_id = 1L,
+      observation_period_start_date = as.Date("2020-01-01"),
+      observation_period_end_date = as.Date("2020-01-01"),
+      period_type_concept_id = 0L
+    )
+  )) |>
+    copyCdm()
+  on.exit(dropCreatedTables(cdm), add = TRUE)
+
+  cdm$cohort <- CohortConstructor::renameCohort(cdm$cohort, c("treated", "death"))
+  trans <- transMat(x = list(c(2), c()), names = c("treated", "death"))
+
+  # A hierarchy must not create follow-up by shifting the same-day death.
+  for (hierarchy in list(character(), c("treated", "death"))) {
+    expect_no_warning(
+      expect_message(
+        msdata <- prepareMultistateData(cdm$cohort, trans, stateHierarchy = hierarchy),
+        "2 records excluded: subject has no follow-up after index date"
+      )
+    )
+    expect_s3_class(msdata, "msdata")
+    expect_identical(attr(msdata, "trans"), trans)
+    expect_equal(nrow(msdata), 0L)
+    expect_named(
+      msdata,
+      c("subject_id", "from", "to", "trans", "Tstart", "Tstop", "status",
+        "from_name", "to_name")
+    )
+  }
+
+  expect_no_warning(
+    expect_message(
+      result <- summariseMultistateProbabilities(cdm$cohort, trans),
+      "2 records excluded: subject has no follow-up after index date"
+    )
+  )
+  expect_equal(nrow(result), 0L)
+  expect_equal(nrow(attr(result, "ms_data")), 0L)
+})
+
 test_that("preparation helpers report and reject conflicting states", {
   expect_invisible(reportIndividuals(0, "test reason"))
   expect_message(

@@ -21,12 +21,14 @@
 #'
 #' Events on the censor date are included. After records beyond their censor
 #' dates are removed, the latest remaining censor date for each person is used
-#' for their trajectory. If `stateHierarchy` shifts a same-day event beyond
-#' that date, follow-up is extended to include the shifted event.
+#' for their trajectory. People with no follow-up after time zero are excluded
+#' before applying `stateHierarchy`. If the hierarchy shifts a same-day event
+#' beyond the censor date, follow-up is extended to include the shifted event.
 #'
 #' Informational messages report excluded records: events after censoring,
-#' people without an eligible initial state, events before time zero, and
-#' states that cannot be reached under `trans`. Counts refer to records,
+#' people without an eligible initial state, events before time zero,
+#' people with no follow-up after time zero, and states that cannot be reached
+#' under `trans`. Counts refer to records,
 #' rather than distinct people. Remaining simultaneous competing states cause
 #' an error; use `stateHierarchy` to order them.
 #'
@@ -199,6 +201,15 @@ prepareMultistateData <- function(cohort,
   nD <- n0 - .numberRecords(allStates)
   reportIndividuals(nD, "event occurred before start event")
 
+  # Exclude whole subjects before the hierarchy can shift same-day events.
+  n0 <- .numberRecords(allStates)
+  allStates <- allStates |>
+    dplyr::group_by(.data$subject_id) |>
+    dplyr::filter(any(.data$censor_date > .data$time_0)) |>
+    dplyr::ungroup()
+  nD <- n0 - .numberRecords(allStates)
+  reportIndividuals(nD, "subject has no follow-up after index date")
+
   # calculate time
   allStates <- allStates |>
     dplyr::mutate(
@@ -214,7 +225,7 @@ prepareMultistateData <- function(cohort,
   allStates <- allStates |>
     dplyr::group_by(.data$subject_id) |>
     dplyr::mutate(
-      time_censor = max(.data$time_censor, .data$Tstart, na.rm = TRUE)
+      time_censor = max(.data$time_censor, .data$Tstart, 0, na.rm = TRUE)
     ) |>
     dplyr::ungroup()
 
@@ -225,7 +236,15 @@ prepareMultistateData <- function(cohort,
   # check individuals with more than one initial state
   checkMultiple(current)
 
-  msdata <- list()
+  msdata <- list(dplyr::tibble(
+    subject_id = allStates$subject_id[0],
+    from = character(),
+    to = character(),
+    trans = transitions$trans[0],
+    Tstart = numeric(),
+    Tstop = numeric(),
+    status = numeric()
+  ))
   i <- 1L
 
   while (.numberRecords(current) > 0) {

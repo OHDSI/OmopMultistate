@@ -162,6 +162,15 @@ summariseMultistateProbabilities <- function(cohort,
           strataValues <- ms |>
             dplyr::select(dplyr::any_of(st)) |>
             dplyr::distinct()
+          if (nrow(ms) == 0L) {
+            return(dplyr::tibble(
+              variable_level = character(),
+              variable_name = character(),
+              probability = numeric(),
+              initial_state = character()
+            ) |>
+              dplyr::cross_join(strataValues))
+          }
           strataLabel <- if (length(st) == 0) {
             "overall"
           } else {
