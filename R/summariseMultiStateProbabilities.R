@@ -1,6 +1,10 @@
 
 #' Summarise Multi-State Occupation Probabilities over time
 #'
+#' Prepare state transitions with [prepareMultistateData()], estimate state
+#' occupation probabilities, and return a standard `summarised_result` for
+#' inspection or plotting with [plotMultistateProbabilities()].
+#'
 #' @inheritParams cohortDoc
 #' @inheritParams transDoc
 #' @inheritParams strataDoc
@@ -10,11 +14,105 @@
 #' @inheritParams stateHierarchyDoc
 #' @inheritParams stateStepDoc
 #'
-#' @returns A `<summarised_result>` object with result_type =
-#' "summarise_multistate_probabilities" that contains the multistate
-#' probabilities.
+#' @details
+#' Each model uses [survival::coxph()] with a separate baseline hazard for each
+#' transition, clustering by person, and Breslow handling of tied event times.
+#' [mstate::msfit()] and [mstate::probtrans()] then estimate state occupation
+#' probabilities from time zero. Time zero, censoring, and exclusions follow
+#' [prepareMultistateData()].
+#'
+#' Results are provided conditional on each initial state, together with an
+#' overall estimate weighted by the observed distribution of initial states in
+#' that model's population. When strata are requested, this is repeated within
+#' each stratum, alongside the unstratified analysis. If fitting fails for a
+#' stratum, an informational message identifies it and the underlying error;
+#' that stratum contributes no probability rows.
+#'
+#' Time points are those returned by the fitted model, including time zero,
+#' restricted to `followUpDays`. A row at exactly `followUpDays` is not
+#' guaranteed. Confidence intervals are not included in the returned result.
+#'
+#' @returns A `summarised_result` with result type
+#' `"summarise_multistate_probabilities"`. Use [tidy()] to obtain columns:
+#'
+#' - `initial_state`: the conditioning state, or `"overall"` for the weighted
+#'   estimate;
+#' - `variable_name`: `"prob_"` followed by the destination state name;
+#' - `variable_level`: elapsed days since time zero, stored as character;
+#' - `probability`: state occupation probability on a scale from zero to one;
+#' - requested strata columns, with `"overall"` for unstratified results.
+#'
+#' [settings()] contains analysis settings, including the permitted transitions
+#' and follow-up horizon. The `ms_data` attribute contains the prepared data
+#' used for fitting, with any requested strata columns.
+#'
+#' @seealso [prepareMultistateData()], [plotMultistateProbabilities()],
+#'   [filterGroup()], [filterStrata()]
 #'
 #' @export
+#'
+#' @examples
+#' library(CohortConstructor)
+#' library(dplyr)
+#' library(omock)
+#' library(OmopMultistate)
+#'
+#' cdm <- mockCdmFromDataset(datasetName = "GiBleed")
+#'
+#' # An illustrative concept set: aspirin 81 mg oral tablets.
+#' # Keep the first treatment episode for each person.
+#' cdm$treated <- conceptCohort(
+#'   cdm = cdm,
+#'   conceptSet = list(treated = 19059056L),
+#'   name = "treated"
+#' ) |>
+#'   requireIsFirstEntry()
+#'
+#' # Enter the untreated state the day after treatment ends. Require that day
+#' # to be within observation, so loss to follow-up is not a discontinuation.
+#' cdm$untreated <- cdm$treated |>
+#'   padCohortEnd(days = 1L, requireFullContribution = TRUE, name = "untreated") |>
+#'   padCohortDate(
+#'     days = 0L,
+#'     indexDate = "cohort_end_date",
+#'     cohortDate = "cohort_start_date"
+#'   ) |>
+#'   renameCohort("untreated")
+#' cdm <- bind(cdm$treated, cdm$untreated, name = "states")
+#'
+#' # Model first discontinuation: untreated is an absorbing state.
+#' # Matrix state names must match the cohort names.
+#' trans <- transMat(
+#'   x = list(2, integer()),
+#'   names = c("treated", "untreated")
+#' )
+#'
+#' # Estimate probabilities during the first year, overall and by initial state.
+#' result <- summariseMultistateProbabilities(
+#'   cohort = cdm$states,
+#'   trans = trans,
+#'   followUpDays = 365,
+#'   stateHierarchy = c("treated", "untreated")
+#' )
+#' tidy(result) |>
+#'   head()
+#'
+#' # Sex is constant within each person and can be used for stratification.
+#' cdm$states <- PatientProfiles::addSex(cdm$states)
+#' bySex <- summariseMultistateProbabilities(
+#'   cohort = cdm$states,
+#'   trans = trans,
+#'   strata = list("sex"),
+#'   followUpDays = 365,
+#'   stateHierarchy = c("treated", "untreated")
+#' )
+#' bySex |>
+#'   filterGroup(initial_state == "treated") |>
+#'   filterStrata(sex == "Female") |>
+#'   tidy() |>
+#'   head()
+#'
+#' cdmDisconnect(cdm)
 #'
 summariseMultistateProbabilities <- function(cohort,
                                              trans,
@@ -245,17 +343,89 @@ addTransToSettings <- function(x, trans) {
   return(x)
 }
 
-#' Plot Multi-State Occupation Probabilities extracted by
-#' `summariseMultistateProbabilities()`
+#' Plot Multi-State Occupation Probabilities
+#'
+#' Display the probabilities from [summariseMultistateProbabilities()] as
+#' stacked step areas, with state occupation shown as percentages.
+#'
+#' @details
+#' States are stacked in transition-matrix order. Varying result columns,
+#' including initial states, strata, and analysis settings, create separate
+#' panels. Use [filterGroup()] and [filterStrata()] before plotting to select
+#' the initial states and populations to display. Keep all destination states
+#' when displaying the complete probability distribution.
+#'
+#' Plotting requires the suggested packages `visOmopResults`, `ggplot2`, and
+#' `scales`.
 #'
 #' @inheritParams resultDoc
 #' @inheritParams styleDoc
 #' @inheritParams timeScaleDoc
 #'
-#' @returns A ggplot2 object with the visualisation of the probabilities over
-#' time.
+#' @returns A `ggplot2` plot that can be customised with additional layers,
+#' labels, or themes.
+#'
+#' @seealso [summariseMultistateProbabilities()], [filterGroup()],
+#'   [filterStrata()], [visOmopResults::themeVisOmop()]
 #'
 #' @export
+#'
+#' @examples
+#' library(CohortConstructor)
+#' library(dplyr)
+#' library(omock)
+#' library(OmopMultistate)
+#'
+#' cdm <- mockCdmFromDataset(datasetName = "GiBleed")
+#'
+#' # An illustrative concept set: aspirin 81 mg oral tablets.
+#' # Keep the first treatment episode for each person.
+#' cdm$treated <- conceptCohort(
+#'   cdm = cdm,
+#'   conceptSet = list(treated = 19059056L),
+#'   name = "treated"
+#' ) |>
+#'   requireIsFirstEntry()
+#'
+#' # Enter the untreated state the day after treatment ends. Require that day
+#' # to be within observation, so loss to follow-up is not a discontinuation.
+#' cdm$untreated <- cdm$treated |>
+#'   padCohortEnd(days = 1L, requireFullContribution = TRUE, name = "untreated") |>
+#'   padCohortDate(
+#'     days = 0L, indexDate = "cohort_end_date", cohortDate = "cohort_start_date"
+#'   ) |>
+#'   renameCohort("untreated")
+#' cdm <- bind(cdm$treated, cdm$untreated, name = "states")
+#'
+#' # Model first discontinuation: untreated is an absorbing state.
+#' # Matrix state names must match the cohort names.
+#' trans <- transMat(
+#'   x = list(2, integer()),
+#'   names = c("treated", "untreated")
+#' )
+#'
+#' cdm$states <- PatientProfiles::addSex(cdm$states)
+#' result <- summariseMultistateProbabilities(
+#'   cohort = cdm$states,
+#'   trans = trans,
+#'   strata = list("sex"),
+#'   followUpDays = 365,
+#'   stateHierarchy = c("treated", "untreated")
+#' )
+#'
+#' # Show the overall probabilities for people starting treatment.
+#' result |>
+#'   filterGroup(initial_state == "treated") |>
+#'   filterStrata(sex == "overall") |>
+#'   plotMultistateProbabilities()
+#'
+#' # Compare the sex strata in separate panels, with time displayed in years.
+#' result |>
+#'   filterGroup(initial_state == "treated") |>
+#'   filterStrata(sex != "overall") |>
+#'   plotMultistateProbabilities(timeScale = "years")
+#'
+#' cdmDisconnect(cdm)
 #'
 plotMultistateProbabilities <- function(result,
                                         style = NULL,

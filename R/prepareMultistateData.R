@@ -1,6 +1,9 @@
 
 #' Prepare Multi-State Data from an OMOP Cohort Table
 #'
+#' Convert cohort-defined state entries into counting-process data for
+#' multi-state survival models using the `survival` and `mstate` packages.
+#'
 #' @inheritParams cohortDoc
 #' @inheritParams transDoc
 #' @inheritParams eventDateDoc
@@ -8,9 +11,91 @@
 #' @inheritParams stateHierarchyDoc
 #' @inheritParams stateStepDoc
 #'
-#' @returns An `msdata` object to be used by the `mstate` package.
+#' @details
+#' Time zero is each person's earliest entry into a state with at least one
+#' outgoing transition. People recorded only in absorbing states cannot enter
+#' the analysis. At each step, the earliest subsequent entry permitted by
+#' `trans` determines the next state. Repeated visits are supported when the
+#' matrix permits returning to a previous state. Cohort end dates alone do not
+#' create exits; provide a cohort for each destination state.
+#'
+#' Events on the censor date are included. After records beyond their censor
+#' dates are removed, the latest remaining censor date for each person is used
+#' for their trajectory. People with no follow-up after time zero are excluded
+#' before applying `stateHierarchy`. If the hierarchy shifts a same-day event
+#' beyond the censor date, follow-up is extended to include the shifted event.
+#'
+#' Informational messages report excluded records: events after censoring,
+#' people without an eligible initial state, events before time zero,
+#' people with no follow-up after time zero, and states that cannot be reached
+#' under `trans`. Counts refer to records,
+#' rather than distinct people. Remaining simultaneous competing states cause
+#' an error; use `stateHierarchy` to order them.
+#'
+#' State records are collected into R for processing, including when `cohort`
+#' is stored in a database.
+#'
+#' @returns An `msdata` data frame with one row per possible outgoing transition
+#' for each interval at risk. Columns include `subject_id`, integer state
+#' identifiers `from` and `to`, transition identifier `trans`, elapsed days
+#' `Tstart` and `Tstop`, and `status` (`1` for the observed transition, `0`
+#' otherwise). `from_name` and `to_name` contain the state names. The transition
+#' matrix is retained in the `trans` attribute.
+#'
+#' @seealso [summariseMultistateProbabilities()], [transMat()]
 #'
 #' @export
+#'
+#' @examples
+#' library(CohortConstructor)
+#' library(dplyr)
+#' library(omock)
+#' library(OmopMultistate)
+#'
+#' cdm <- mockCdmFromDataset(datasetName = "GiBleed")
+#'
+#' # An illustrative concept set: aspirin 81 mg oral tablets.
+#' # Keep the first treatment episode for each person.
+#' cdm$treated <- conceptCohort(
+#'   cdm = cdm,
+#'   conceptSet = list(treated = 19059056L),
+#'   name = "treated"
+#' ) |>
+#'   requireIsFirstEntry()
+#'
+#' # Enter the untreated state the day after treatment ends. Require that day
+#' # to be within observation, so loss to follow-up is not a discontinuation.
+#' cdm$untreated <- cdm$treated |>
+#'   padCohortEnd(days = 1L, requireFullContribution = TRUE, name = "untreated") |>
+#'   padCohortDate(
+#'     days = 0L,
+#'     indexDate = "cohort_end_date",
+#'     cohortDate = "cohort_start_date"
+#'   ) |>
+#'   renameCohort("untreated")
+#' cdm <- bind(cdm$treated, cdm$untreated, name = "states")
+#'
+#' # Model first discontinuation: untreated is an absorbing state.
+#' # Matrix state names must match the cohort names.
+#' trans <- transMat(
+#'   x = list(2, integer()),
+#'   names = c("treated", "untreated")
+#' )
+#'
+#' # By default, follow-up ends at the end of each person's observation period.
+#' # Resolve any same-day states by placing treatment before discontinuation.
+#' msData <- prepareMultistateData(
+#'   cohort = cdm$states,
+#'   trans = trans,
+#'   stateHierarchy = c("treated", "untreated")
+#' )
+#'
+#' # One row per possible transition and time interval; status = 1 is an event.
+#' msData |>
+#'   arrange(subject_id, Tstart) |>
+#'   head()
+#'
+#' cdmDisconnect(cdm)
 #'
 prepareMultistateData <- function(cohort,
                                   trans,

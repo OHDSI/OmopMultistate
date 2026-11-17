@@ -23,26 +23,121 @@ trans should be an S x S matrix, with (i,j)-element a positive integer if a
 transition from i to j is possible in the multi-state model, NA otherwise. In
 particular, all diagonal elements should be NA. The integers indicating the
 possible transitions in the multi-state model should be sequentially
-numbered, 1,...,K, with K the number of transitions.}
+numbered, 1,...,K, with K the number of transitions. Row and column names
+must be identical, unique state names in the same order. A row containing
+only \code{NA} defines an absorbing state. Use \code{\link[=transMat]{transMat()}} to build a matrix.}
 
 \item{eventDate}{Name of the date column in \code{cohort} that identifies when an
-individual enters a state.}
+individual enters a state. State entries are defined by these dates;
+reaching \code{cohort_end_date} does not automatically create a state change.}
 
 \item{censorDate}{Name of the date column in \code{cohort} that identifies the end
 of follow-up, inclusive. If \code{NULL}, the end of each individual's observation
-period is used. Individuals with no follow-up after their index date are
-excluded from the analysis.}
+period is used. Missing values in a supplied column also fall back to the
+observation period end. Supplied dates replace the observation-based dates;
+they are not automatically capped at observation end. Use the same date on
+all state records for a person when specifying a single follow-up endpoint.
+Individuals with no follow-up after their index date are excluded from the
+analysis.}
 
 \item{stateHierarchy}{Character vector of state names in the order used to
 resolve states that occur on the same date, with earlier entries occurring
-first. An empty character vector applies no hierarchy.}
+first. An empty character vector applies no hierarchy; unresolved ties
+between competing states cause an error. Include all states that need a
+distinct order. Unlisted states share the priority of the last listed state.}
 
 \item{stateStep}{Numeric increment used to separate states that occur on the
-same date according to \code{stateHierarchy}.}
+same date according to \code{stateHierarchy}, in days. Successive priority ranks
+are shifted by multiples of this increment. The default is \code{0.01} days.}
 }
 \value{
-An \code{msdata} object to be used by the \code{mstate} package.
+An \code{msdata} data frame with one row per possible outgoing transition
+for each interval at risk. Columns include \code{subject_id}, integer state
+identifiers \code{from} and \code{to}, transition identifier \code{trans}, elapsed days
+\code{Tstart} and \code{Tstop}, and \code{status} (\code{1} for the observed transition, \code{0}
+otherwise). \code{from_name} and \code{to_name} contain the state names. The transition
+matrix is retained in the \code{trans} attribute.
 }
 \description{
-Prepare Multi-State Data from an OMOP Cohort Table
+Convert cohort-defined state entries into counting-process data for
+multi-state survival models using the \code{survival} and \code{mstate} packages.
+}
+\details{
+Time zero is each person's earliest entry into a state with at least one
+outgoing transition. People recorded only in absorbing states cannot enter
+the analysis. At each step, the earliest subsequent entry permitted by
+\code{trans} determines the next state. Repeated visits are supported when the
+matrix permits returning to a previous state. Cohort end dates alone do not
+create exits; provide a cohort for each destination state.
+
+Events on the censor date are included. After records beyond their censor
+dates are removed, the latest remaining censor date for each person is used
+for their trajectory. People with no follow-up after time zero are excluded
+before applying \code{stateHierarchy}. If the hierarchy shifts a same-day event
+beyond the censor date, follow-up is extended to include the shifted event.
+
+Informational messages report excluded records: events after censoring,
+people without an eligible initial state, events before time zero,
+people with no follow-up after time zero, and states that cannot be reached
+under \code{trans}. Counts refer to records,
+rather than distinct people. Remaining simultaneous competing states cause
+an error; use \code{stateHierarchy} to order them.
+
+State records are collected into R for processing, including when \code{cohort}
+is stored in a database.
+}
+\examples{
+library(CohortConstructor)
+library(dplyr)
+library(omock)
+library(OmopMultistate)
+
+cdm <- mockCdmFromDataset(datasetName = "GiBleed")
+
+# An illustrative concept set: aspirin 81 mg oral tablets.
+# Keep the first treatment episode for each person.
+cdm$treated <- conceptCohort(
+  cdm = cdm,
+  conceptSet = list(treated = 19059056L),
+  name = "treated"
+) |>
+  requireIsFirstEntry()
+
+# Enter the untreated state the day after treatment ends. Require that day
+# to be within observation, so loss to follow-up is not a discontinuation.
+cdm$untreated <- cdm$treated |>
+  padCohortEnd(days = 1L, requireFullContribution = TRUE, name = "untreated") |>
+  padCohortDate(
+    days = 0L,
+    indexDate = "cohort_end_date",
+    cohortDate = "cohort_start_date"
+  ) |>
+  renameCohort("untreated")
+cdm <- bind(cdm$treated, cdm$untreated, name = "states")
+
+# Model first discontinuation: untreated is an absorbing state.
+# Matrix state names must match the cohort names.
+trans <- transMat(
+  x = list(2, integer()),
+  names = c("treated", "untreated")
+)
+
+# By default, follow-up ends at the end of each person's observation period.
+# Resolve any same-day states by placing treatment before discontinuation.
+msData <- prepareMultistateData(
+  cohort = cdm$states,
+  trans = trans,
+  stateHierarchy = c("treated", "untreated")
+)
+
+# One row per possible transition and time interval; status = 1 is an event.
+msData |>
+  arrange(subject_id, Tstart) |>
+  head()
+
+cdmDisconnect(cdm)
+
+}
+\seealso{
+\code{\link[=summariseMultistateProbabilities]{summariseMultistateProbabilities()}}, \code{\link[=transMat]{transMat()}}
 }

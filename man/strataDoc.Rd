@@ -6,8 +6,11 @@
 \arguments{
 \item{strata}{List of character vectors defining stratifications. Each
 character vector identifies one or more columns in \code{cohort}; a separate model
-is fitted for each stratification. The value of strata can not change in each
-individual.}
+is fitted for each combination of values. For example,
+\code{list("sex", c("sex", "age_group"))} requests models by sex and by sex and
+age group jointly. An unstratified model is always included. Each column
+must be constant within a person across all cohort records. Missing values
+are labelled \code{"Missing"}.}
 }
 \description{
 Helper for consistent documentation of \code{strata}.
