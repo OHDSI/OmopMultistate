@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# OmopMultistate <img src="man/figures/logo.png" align="right" height="126" alt="" />
+# OmopMultistate <img src="man/figures/logo.png" align="right" height="126" alt="OmopMultistate package logo" />
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
@@ -47,8 +47,8 @@ book.
 
 | Source | Driver | CDM reference | Status |
 |------------------|------------------|------------------|------------------|
-| Local R data frame | N/A | `omopgenerics::cdmFromTables()` | [![](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=local-omopgenerics)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
-| In-memory DuckDB database | duckdb | `CDMConnector::cdmFromCon()` | [![](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=duckdb-CDMConnector)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
+| Local R data frame | N/A | `omopgenerics::cdmFromTables()` | [![Local data-frame test status](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=local-omopgenerics)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
+| In-memory DuckDB database | duckdb | `CDMConnector::cdmFromCon()` | [![DuckDB test status](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=duckdb-CDMConnector)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
 
 ## Installation
 
@@ -207,7 +207,7 @@ A row at exactly `followUpDays` is not guaranteed.
 You can visualise now the results. States are displayed in the same order as
 they appear in the transition matrix:
 
-```{r plot-probabilities, fig.width=8, fig.height=5}
+```{r plot-probabilities, fig.width=8, fig.height=5, fig.alt="Stacked state occupation probabilities over time for people initially receiving acetaminophen, showing treatment, discontinuation, and death."}
 result |>
   filterGroup(initial_state == "acetaminophen") |>
   plotMultistateProbabilities()
