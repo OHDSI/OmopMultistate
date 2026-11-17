@@ -6,7 +6,8 @@
 \arguments{
 \item{censorDate}{Name of the date column in \code{cohort} that identifies the end
 of follow-up, inclusive. If \code{NULL}, the end of each individual's observation
-period is used.}
+period is used. Individuals with no follow-up after their index date are
+excluded from the analysis.}
 }
 \description{
 Helper for consistent documentation of \code{censorDate}.

@@ -36,7 +36,8 @@ NULL
 #'
 #' @param censorDate Name of the date column in `cohort` that identifies the end
 #' of follow-up, inclusive. If `NULL`, the end of each individual's observation
-#' period is used.
+#' period is used. Individuals with no follow-up after their index date are
+#' excluded from the analysis.
 #'
 #' @name censorDateDoc
 #' @keywords internal

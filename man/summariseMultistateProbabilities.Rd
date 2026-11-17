@@ -41,7 +41,8 @@ individual enters a state.}
 
 \item{censorDate}{Name of the date column in \code{cohort} that identifies the end
 of follow-up, inclusive. If \code{NULL}, the end of each individual's observation
-period is used.}
+period is used. Individuals with no follow-up after their index date are
+excluded from the analysis.}
 
 \item{stateHierarchy}{Character vector of state names in the order used to
 resolve states that occur on the same date, with earlier entries occurring
