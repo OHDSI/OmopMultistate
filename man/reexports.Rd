@@ -5,6 +5,7 @@
 \alias{reexports}
 \alias{transMat}
 \alias{tidy}
+\alias{settings}
 \alias{filterGroup}
 \alias{filterStrata}
 \alias{filterAdditional}
@@ -17,8 +18,8 @@ These objects are imported from other packages. Follow the links
 below to see their documentation.
 
 \describe{
-  \item{mstate}{\code{\link[mstate]{transMat}}}
+  \item{mstate}{\code{\link[mstate:transMat]{transMat()}}}
 
-  \item{omopgenerics}{\code{\link[omopgenerics]{filterAdditional}}, \code{\link[omopgenerics]{filterGroup}}, \code{\link[omopgenerics]{filterResult}}, \code{\link[omopgenerics]{filterSettings}}, \code{\link[omopgenerics]{filterStrata}}, \code{\link[omopgenerics:reexports]{tidy}}}
+  \item{omopgenerics}{\code{\link[omopgenerics:filterAdditional]{filterAdditional()}}, \code{\link[omopgenerics:filterGroup]{filterGroup()}}, \code{\link[omopgenerics:filterResult]{filterResult()}}, \code{\link[omopgenerics:filterSettings]{filterSettings()}}, \code{\link[omopgenerics:filterStrata]{filterStrata()}}, \code{\link[omopgenerics:settings]{settings()}}, \code{\link[omopgenerics:tidy]{tidy}}}
 }}
 
