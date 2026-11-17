@@ -12,4 +12,5 @@ Helper for consistent documentation of `censorDate`.
   fall back to the observation period end. Supplied dates replace the
   observation-based dates; they are not automatically capped at
   observation end. Use the same date on all state records for a person
-  when specifying a single follow-up endpoint.
+  when specifying a single follow-up endpoint. Individuals with no
+  follow-up after their index date are excluded from the analysis.
