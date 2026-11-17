@@ -4,11 +4,19 @@
 \name{OmopMultistate-package}
 \alias{OmopMultistate}
 \alias{OmopMultistate-package}
-\title{OmopMultistate: What the Package Does (One Line, Title Case)}
+\title{OmopMultistate: Multi-State Analyses Using the OMOP Common Data Model}
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-What the package does (one paragraph).
+Prepare cohort records from the Observational Medical Outcomes Partnership (OMOP) Common Data Model for multi-state analyses. Define permitted transitions between cohort-defined states, estimate state occupation probabilities overall and across strata, and visualise the results. Analyses use the 'survival' and 'mstate' packages and return standard 'omopgenerics' summarised results.
+}
+\details{
+Start with a cohort table containing one cohort per state and use
+\code{\link[=transMat]{transMat()}} to define the permitted transitions. Prepare data for other
+models with \code{\link[=prepareMultistateData]{prepareMultistateData()}}, or estimate state occupation
+probabilities with \code{\link[=summariseMultistateProbabilities]{summariseMultistateProbabilities()}}. Use \code{\link[=tidy]{tidy()}} and
+\code{\link[=settings]{settings()}} to inspect results and \code{\link[=plotMultistateProbabilities]{plotMultistateProbabilities()}} to plot
+them.
 }
 \seealso{
 Useful links:

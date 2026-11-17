@@ -5,7 +5,8 @@
 \title{Helper for consistent documentation of \code{timeScale}.}
 \arguments{
 \item{timeScale}{Character string specifying the time scale of the x-axis:
-either \code{"days"} or \code{"years"}.}
+either \code{"days"} or \code{"years"}. Years are calculated as days divided by
+\code{365.25}; this changes only the plot axis.}
 }
 \description{
 Helper for consistent documentation of \code{timeScale}.

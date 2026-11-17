@@ -25,36 +25,148 @@ trans should be an S x S matrix, with (i,j)-element a positive integer if a
 transition from i to j is possible in the multi-state model, NA otherwise. In
 particular, all diagonal elements should be NA. The integers indicating the
 possible transitions in the multi-state model should be sequentially
-numbered, 1,...,K, with K the number of transitions.}
+numbered, 1,...,K, with K the number of transitions. Row and column names
+must be identical, unique state names in the same order. A row containing
+only \code{NA} defines an absorbing state. Use \code{\link[=transMat]{transMat()}} to build a matrix.}
 
 \item{strata}{List of character vectors defining stratifications. Each
 character vector identifies one or more columns in \code{cohort}; a separate model
-is fitted for each stratification. The value of strata can not change in each
-individual.}
+is fitted for each combination of values. For example,
+\code{list("sex", c("sex", "age_group"))} requests models by sex and by sex and
+age group jointly. An unstratified model is always included. Each column
+must be constant within a person across all cohort records. Missing values
+are labelled \code{"Missing"}.}
 
 \item{followUpDays}{Maximum number of days of follow-up for which to estimate
 state occupation probabilities. Use \code{Inf} to include all available
-follow-up.}
+follow-up. This limits the time points returned after model fitting; it
+does not censor the input data or refit the model at this horizon.}
 
 \item{eventDate}{Name of the date column in \code{cohort} that identifies when an
-individual enters a state.}
+individual enters a state. State entries are defined by these dates;
+reaching \code{cohort_end_date} does not automatically create a state change.}
 
 \item{censorDate}{Name of the date column in \code{cohort} that identifies the end
 of follow-up, inclusive. If \code{NULL}, the end of each individual's observation
-period is used.}
+period is used. Missing values in a supplied column also fall back to the
+observation period end. Supplied dates replace the observation-based dates;
+they are not automatically capped at observation end. Use the same date on
+all state records for a person when specifying a single follow-up endpoint.}
 
 \item{stateHierarchy}{Character vector of state names in the order used to
 resolve states that occur on the same date, with earlier entries occurring
-first. An empty character vector applies no hierarchy.}
+first. An empty character vector applies no hierarchy; unresolved ties
+between competing states cause an error. Include all states that need a
+distinct order. Unlisted states share the priority of the last listed state.}
 
 \item{stateStep}{Numeric increment used to separate states that occur on the
-same date according to \code{stateHierarchy}.}
+same date according to \code{stateHierarchy}, in days. Successive priority ranks
+are shifted by multiples of this increment. The default is \code{0.01} days.}
 }
 \value{
-A \verb{<summarised_result>} object with result_type =
-"summarise_multistate_probabilities" that contains the multistate
-probabilities.
+A \code{summarised_result} with result type
+\code{"summarise_multistate_probabilities"}. Use \code{\link[=tidy]{tidy()}} to obtain columns:
+\itemize{
+\item \code{initial_state}: the conditioning state, or \code{"overall"} for the weighted
+estimate;
+\item \code{variable_name}: \code{"prob_"} followed by the destination state name;
+\item \code{variable_level}: elapsed days since time zero, stored as character;
+\item \code{probability}: state occupation probability on a scale from zero to one;
+\item requested strata columns, with \code{"overall"} for unstratified results.
+}
+
+\code{\link[=settings]{settings()}} contains analysis settings, including the permitted transitions
+and follow-up horizon. The \code{ms_data} attribute contains the prepared data
+used for fitting, with any requested strata columns.
 }
 \description{
-Summarise Multi-State Occupation Probabilities over time
+Prepare state transitions with \code{\link[=prepareMultistateData]{prepareMultistateData()}}, estimate state
+occupation probabilities, and return a standard \code{summarised_result} for
+inspection or plotting with \code{\link[=plotMultistateProbabilities]{plotMultistateProbabilities()}}.
+}
+\details{
+Each model uses \code{\link[survival:coxph]{survival::coxph()}} with a separate baseline hazard for each
+transition, clustering by person, and Breslow handling of tied event times.
+\code{\link[mstate:msfit]{mstate::msfit()}} and \code{\link[mstate:probtrans]{mstate::probtrans()}} then estimate state occupation
+probabilities from time zero. Time zero, censoring, and exclusions follow
+\code{\link[=prepareMultistateData]{prepareMultistateData()}}.
+
+Results are provided conditional on each initial state, together with an
+overall estimate weighted by the observed distribution of initial states in
+that model's population. When strata are requested, this is repeated within
+each stratum, alongside the unstratified analysis. If fitting fails for a
+stratum, an informational message identifies it and the underlying error;
+that stratum contributes no probability rows.
+
+Time points are those returned by the fitted model, including time zero,
+restricted to \code{followUpDays}. A row at exactly \code{followUpDays} is not
+guaranteed. Confidence intervals are not included in the returned result.
+}
+\examples{
+library(CohortConstructor)
+library(dplyr)
+library(omock)
+library(OmopMultistate)
+
+cdm <- mockCdmFromDataset(datasetName = "GiBleed")
+
+# An illustrative concept set: aspirin 81 mg oral tablets.
+# Keep the first treatment episode for each person.
+cdm$treated <- conceptCohort(
+  cdm = cdm,
+  conceptSet = list(treated = 19059056L),
+  name = "treated"
+) |>
+  requireIsFirstEntry()
+
+# Enter the untreated state the day after treatment ends. Require that day
+# to be within observation, so loss to follow-up is not a discontinuation.
+cdm$untreated <- cdm$treated |>
+  padCohortEnd(days = 1L, requireFullContribution = TRUE, name = "untreated") |>
+  padCohortDate(
+    days = 0L,
+    indexDate = "cohort_end_date",
+    cohortDate = "cohort_start_date"
+  ) |>
+  renameCohort("untreated")
+cdm <- bind(cdm$treated, cdm$untreated, name = "states")
+
+# Model first discontinuation: untreated is an absorbing state.
+# Matrix state names must match the cohort names.
+trans <- transMat(
+  x = list(2, integer()),
+  names = c("treated", "untreated")
+)
+
+# Estimate probabilities during the first year, overall and by initial state.
+result <- summariseMultistateProbabilities(
+  cohort = cdm$states,
+  trans = trans,
+  followUpDays = 365,
+  stateHierarchy = c("treated", "untreated")
+)
+tidy(result) |>
+  head()
+
+# Sex is constant within each person and can be used for stratification.
+cdm$states <- PatientProfiles::addSex(cdm$states)
+bySex <- summariseMultistateProbabilities(
+  cohort = cdm$states,
+  trans = trans,
+  strata = list("sex"),
+  followUpDays = 365,
+  stateHierarchy = c("treated", "untreated")
+)
+bySex |>
+  filterGroup(initial_state == "treated") |>
+  filterStrata(sex == "Female") |>
+  tidy() |>
+  head()
+
+cdmDisconnect(cdm)
+
+}
+\seealso{
+\code{\link[=prepareMultistateData]{prepareMultistateData()}}, \code{\link[=plotMultistateProbabilities]{plotMultistateProbabilities()}},
+\code{\link[=filterGroup]{filterGroup()}}, \code{\link[=filterStrata]{filterStrata()}}
 }
