@@ -63,17 +63,18 @@ prepareMultistateData <- function(cohort,
     dplyr::mutate(id = dplyr::coalesce(.data$id, .env$mID))
 
   # prepare censor date
+  id <- omopgenerics::uniqueId(exclude = colnames(cohort))
   cohort <- cohort |>
     PatientProfiles::addCohortName() |>
     dplyr::filter(.data$cohort_name %in% .env$states) |>
     PatientProfiles::addFutureObservationQuery(
       futureObservationType = "date",
-      futureObservationName = "censor_date"
+      futureObservationName = id
     )
   if (!is.null(censorDate)) {
     cohort <- cohort |>
       dplyr::mutate(
-        "censor_date" = dplyr::coalesce(.data[[censorDate]], .data$censor_date)
+        !!id := dplyr::coalesce(.data[[censorDate]], .data[[id]])
       )
   }
 
@@ -83,7 +84,7 @@ prepareMultistateData <- function(cohort,
       "state" = "cohort_name",
       "subject_id",
       "date_event" = dplyr::all_of(eventDate),
-      "censor_date"
+      "censor_date" = dplyr::all_of(id)
     ) |>
     dplyr::collect()
 

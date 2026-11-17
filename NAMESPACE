@@ -22,6 +22,7 @@ importFrom(omopgenerics,
   tidy
 )
 importFrom(rlang,
+  ":=",
   .data,
   .env
 )

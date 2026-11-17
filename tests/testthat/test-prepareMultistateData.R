@@ -41,6 +41,54 @@ test_that("prepareMultistateData validates states and optional arguments", {
   expect_identical(attr(msdata, "trans"), trans)
 })
 
+test_that("censorDate can refer to a column named censor_date", {
+  cdm <- omock::mockCdmFromTables(tables = list(
+    cohort = dplyr::tibble(
+      cohort_definition_id = c(1L, 2L, 1L, 2L, 1L, 1L),
+      subject_id = c(1L, 1L, 2L, 2L, 3L, 4L),
+      cohort_start_date = as.Date("2020-01-01") + c(0L, 10L, 0L, 10L, 0L, 0L),
+      cohort_end_date = cohort_start_date,
+      censor_date = as.Date("2020-01-01") + c(5L, 5L, 10L, 10L, 15L, NA_integer_)
+    ),
+    observation_period = dplyr::tibble(
+      observation_period_id = 1:4,
+      person_id = 1:4,
+      observation_period_start_date = as.Date("2020-01-01"),
+      observation_period_end_date = as.Date("2020-01-31"),
+      period_type_concept_id = 0L
+    )
+  )) |>
+    copyCdm()
+  on.exit(dropCreatedTables(cdm), add = TRUE)
+
+  cdm$cohort <- cdm$cohort |>
+    CohortConstructor::renameCohort(c("treated", "death"))
+  trans <- transMat(
+    x = list(c(2), c()),
+    names = c("treated", "death")
+  )
+
+  expect_no_warning(
+    expect_message(
+      msdata <- prepareMultistateData(
+        cohort = cdm$cohort,
+        trans = trans,
+        censorDate = "censor_date"
+      ),
+      "1 record excluded: event occurred after censor date"
+    )
+  )
+
+  msdata <- msdata |>
+    dplyr::arrange(.data$subject_id)
+  expect_s3_class(msdata, "msdata")
+  expect_identical(attr(msdata, "trans"), trans)
+  expect_equal(msdata$subject_id, 1:4)
+  expect_equal(msdata$Tstart, rep(0, 4))
+  expect_equal(msdata$Tstop, c(5, 10, 15, 30))
+  expect_equal(msdata$status, c(0, 1, 0, 0))
+})
+
 test_that("preparation helpers report and reject conflicting states", {
   expect_invisible(reportIndividuals(0, "test reason"))
   expect_message(
