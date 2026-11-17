@@ -15,3 +15,8 @@ Useful links:
 
 **Maintainer**: Martí Català <marti.catalasabate@ndorms.ox.ac.uk>
 ([ORCID](https://orcid.org/0000-0003-3308-9905))
+
+Authors:
+
+- Martí Català <marti.catalasabate@ndorms.ox.ac.uk>
+  ([ORCID](https://orcid.org/0000-0003-3308-9905))
