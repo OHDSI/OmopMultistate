@@ -7,4 +7,5 @@ Helper for consistent documentation of `stateStep`.
 - stateStep:
 
   Numeric increment used to separate states that occur on the same date
-  according to `stateHierarchy`.
+  according to `stateHierarchy`, in days. Successive priority ranks are
+  shifted by multiples of this increment. The default is `0.01` days.

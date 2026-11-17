@@ -43,30 +43,37 @@ pak::pak("OHDSI/OmopMultistate")
 
 ## Example
 
-The following example uses a small mock OMOP CDM containing three
-states: `treated`, `untreated`, and the absorbing state `death`.
+The following example models acetaminophen treatment, discontinuation,
+and restarting treatment, with death as an absorbing state. It uses the
+synthetic `synpuf-1k` dataset, which `omock` downloads on first use, and
+a temporary DuckDB database. This example requires `omock`,
+`CohortConstructor`, `CodelistGenerator`, `CDMConnector`, and `duckdb`;
+plotting also requires `visOmopResults`, `ggplot2`, and `scales`.
+
+The function help pages provide smaller examples using the bundled
+`GiBleed` dataset and a model of first discontinuation, where
+`untreated` is absorbing. Those examples run locally without a dataset
+download or database connection.
 
 ``` r
 
 library(OmopMultistate)
 library(omock)
 library(CohortConstructor)
-#> Warning: package 'CohortConstructor' was built under R version 4.4.3
 library(CodelistGenerator)
-#> Warning: package 'CodelistGenerator' was built under R version 4.4.3
 library(dplyr)
-#> Warning: package 'dplyr' was built under R version 4.4.3
 
 cdm <- mockCdmFromDataset(datasetName = "synpuf-1k", source = "duckdb")
 
 cdm
 ```
 
-First we will do the simplest possible case, we analyse discontinuation
-of **acetaminophen**. So we will create 3 cohorts: acetaminophen,
-discontinuation of acetaminophen (untreated) and death. We will use
-[CohortConstructor](https://oxford-pharmacoepi.github.io/OmopMultistate/)
-to create the cohorts.
+We use [CohortConstructor](https://ohdsi.github.io/CohortConstructor/)
+to create three cohorts: acetaminophen treatment, discontinuation
+(`untreated`), and death (`death_cohort`). Cohort names must match the
+state names in the transition matrix. Cohort start dates mark state
+entries; reaching a cohort end date alone does not create a state
+change, so we construct discontinuation explicitly.
 
 ``` r
 
@@ -88,7 +95,7 @@ cdm$death_cohort <- deathCohort(cdm = cdm, name = "death_cohort")
 
 # untreated cohort
 cdm$untreated <- cdm$acetaminophen |>
-  padCohortEnd(days = 1L, name = "untreated") |>
+  padCohortEnd(days = 1L, requireFullContribution = TRUE, name = "untreated") |>
   padCohortDate(days = 0L, indexDate = "cohort_end_date", cohortDate = "cohort_start_date") |>
   renameCohort("untreated")
 
@@ -99,15 +106,17 @@ cdm <- bind(cdm$acetaminophen, cdm$death_cohort, cdm$untreated, name = "my_study
 settings(cdm$my_study)
 #> # A tibble: 3 × 6
 #>   cohort_definition_id cohort_name   cdm_version vocabulary_version
-#>                  <int> <chr>         <chr>       <chr>             
-#> 1                    1 acetaminophen 5.4         v5.0 29-APR-16    
-#> 2                    2 death_cohort  <NA>        <NA>              
-#> 3                    3 untreated     5.4         v5.0 29-APR-16    
-#> # ℹ 2 more variables: subset_cohort_table <chr>, subset_cohort_id <dbl>
+#>                  <int> <chr>         <chr>       <chr>
+#> 1                    1 acetaminophen 5.4         v5.0 29-APR-16
+#> 2                    2 death_cohort  <NA>        <NA>
+#> 3                    3 untreated     5.4         v5.0 29-APR-16
+#> # ℹ 2 more variables: subset_cohort_table <chr>, subset_cohort_id <chr>
 ```
 
-Now we will focus on defining the transitions, the individuals can move
-from:
+Requiring the day after treatment end to be within observation prevents
+loss to follow-up from being counted as discontinuation.
+
+The permitted transitions are:
 
 - `acetaminophen` to `untreated`
 - `acetaminophen` to `death_cohort`
@@ -129,13 +138,28 @@ trans
 #>   death_cohort             NA        NA           NA
 ```
 
+Rows describe the state being left and columns describe the destination.
+An `NA` entry forbids a transition; a row containing only `NA` makes
+that state absorbing.
+
 Some records can occur on the same date. We resolve these ties in their
-logical order, placing death last because it is an absorbing state.
+logical order, placing death last because it is an absorbing state. By
+default, `stateStep = 0.01` separates successive priority ranks by
+hundredths of a day. Without a hierarchy, simultaneous competing states
+cause an error.
 
 ``` r
 
 stateHierarchy <- c("acetaminophen", "untreated", "death_cohort")
 ```
+
+Each person’s time zero is their first entry into a state with an
+outgoing transition. Here, that is their first recorded treatment or
+discontinuation. Follow-up ends at observation end by default. A
+supplied `censorDate` column replaces that default, with missing dates
+falling back to observation end; custom dates are not automatically
+capped at observation end. Use a consistent endpoint across a person’s
+state records for an administrative censor date.
 
 You can prepare the data in the long format used by
 [mstate](https://hputter.github.io/mstate/) and then fit other models:
@@ -152,7 +176,7 @@ msData |>
   arrange(subject_id, Tstart) |>
   head(10)
 #> An object of class 'msdata'
-#> 
+#>
 #> Data:
 #>    subject_id from to trans Tstart Tstop status     from_name       to_name
 #> 1           1    1  2     1      0    30      1 acetaminophen     untreated
@@ -167,8 +191,14 @@ msData |>
 #> 10          1    1  3     2    532   552      0 acetaminophen  death_cohort
 ```
 
-If we are interested in summarising the probabilities over time we can
-use the `summariseMultistateProbabilities` function:
+`Tstart` and `Tstop` are days since time zero. `status = 1` identifies
+the observed transition; other possible transitions in the interval have
+`status = 0`.
+
+To estimate state occupation probabilities, use
+[`summariseMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md).
+Its `followUpDays` argument limits the time points returned after
+fitting; use `censorDate` to change the input follow-up endpoint.
 
 ``` r
 
@@ -187,24 +217,33 @@ they are not R warnings.
 
 ``` r
 
-tidy(result)
-#> # A tibble: 9,552 × 9
-#>    cdm_name  initial_state variable_name      variable_level probability
-#>    <chr>     <chr>         <chr>              <chr>                <dbl>
-#>  1 synpuf-1k overall       prob_acetaminophen 0                    1    
-#>  2 synpuf-1k overall       prob_untreated     0                    0    
-#>  3 synpuf-1k overall       prob_death_cohort  0                    0    
-#>  4 synpuf-1k overall       prob_acetaminophen 10                   0.770
-#>  5 synpuf-1k overall       prob_untreated     10                   0.230
-#>  6 synpuf-1k overall       prob_death_cohort  10                   0    
-#>  7 synpuf-1k overall       prob_acetaminophen 12                   0.772
-#>  8 synpuf-1k overall       prob_untreated     12                   0.228
-#>  9 synpuf-1k overall       prob_death_cohort  12                   0    
-#> 10 synpuf-1k overall       prob_acetaminophen 13                   0.774
-#> # ℹ 9,542 more rows
-#> # ℹ 4 more variables: cohort_table_name <chr>, follow_up_days <chr>,
-#> #   state_hierarchy <chr>, state_step <chr>
+tidy(result) |>
+  head()
+#> # A tibble: 6 × 10
+#>   cdm_name  initial_state variable_name      variable_level probability
+#>   <chr>     <chr>         <chr>              <chr>                <dbl>
+#> 1 synpuf-1k overall       prob_acetaminophen 0                    1
+#> 2 synpuf-1k overall       prob_untreated     0                    0
+#> 3 synpuf-1k overall       prob_death_cohort  0                    0
+#> 4 synpuf-1k overall       prob_acetaminophen 10                   0.770
+#> 5 synpuf-1k overall       prob_untreated     10                   0.230
+#> 6 synpuf-1k overall       prob_death_cohort  10                   0
+#> # ℹ 5 more variables: cohort_table_name <chr>, follow_up_days <chr>,
+#> #   state_hierarchy <chr>, state_step <chr>, transitions <chr>
 ```
+
+After [`tidy()`](https://generics.r-lib.org/reference/tidy.html),
+`variable_name` identifies the destination state (for example,
+`prob_untreated`), `variable_level` contains elapsed days as character
+values, and `probability` is a proportion between zero and one.
+`initial_state` gives the state on which the probabilities are
+conditioned. `initial_state = "overall"` weights the state-specific
+estimates by the observed starting-state distribution.
+`settings(result)` records the analysis settings, including the
+transition structure.
+
+Probabilities are returned at model time points rather than for every
+day. A row at exactly `followUpDays` is not guaranteed.
 
 You can visualise now the results. States are displayed in the same
 order as they appear in the transition matrix:
@@ -217,3 +256,52 @@ result |>
 ```
 
 ![](reference/figures/README-plot-probabilities-1.png)
+
+## Stratification
+
+Add columns that are constant within each person before requesting
+strata. The following fits models by sex as well as an unstratified
+model:
+
+``` r
+
+cdm$my_study <- PatientProfiles::addSex(cdm$my_study)
+bySex <- summariseMultistateProbabilities(
+  cohort = cdm$my_study,
+  trans = trans,
+  strata = list("sex"),
+  followUpDays = 365,
+  stateHierarchy = stateHierarchy
+)
+
+bySex |>
+  filterGroup(initial_state == "acetaminophen") |>
+  filterStrata(sex == "Female") |>
+  tidy() |>
+  head()
+#> # A tibble: 6 × 10
+#>   cdm_name  initial_state sex    variable_name      variable_level probability
+#>   <chr>     <chr>         <chr>  <chr>              <chr>                <dbl>
+#> 1 synpuf-1k acetaminophen Female prob_acetaminophen 0                    1
+#> 2 synpuf-1k acetaminophen Female prob_untreated     0                    0
+#> 3 synpuf-1k acetaminophen Female prob_death_cohort  0                    0
+#> 4 synpuf-1k acetaminophen Female prob_acetaminophen 10                   0.746
+#> 5 synpuf-1k acetaminophen Female prob_untreated     10                   0.254
+#> 6 synpuf-1k acetaminophen Female prob_death_cohort  10                   0
+#> # ℹ 4 more variables: follow_up_days <chr>, state_hierarchy <chr>,
+#> #   state_step <chr>, transitions <chr>
+```
+
+Use `strata = list("sex", c("sex", "age_group"))` when an `age_group`
+column is also present to request both sex-specific and joint sex and
+age models. Missing strata values are labelled `"Missing"`. A value of
+`"overall"` in a strata column identifies a result pooled across that
+variable. If a model cannot be fitted for a stratum, an informational
+message explains the error and that stratum contributes no probability
+rows.
+
+Filtering with `filterStrata(sex == "overall")` selects the unstratified
+model. Passing several strata to
+[`plotMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/plotMultistateProbabilities.md)
+creates separate panels; `timeScale = "years"` converts the x-axis from
+days to years.

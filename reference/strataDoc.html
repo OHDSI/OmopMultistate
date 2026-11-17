@@ -43,8 +43,11 @@
 <dl><dt id="arg-strata">strata<a class="anchor" aria-label="anchor" href="#arg-strata"></a></dt>
 <dd><p>List of character vectors defining stratifications. Each
 character vector identifies one or more columns in <code>cohort</code>; a separate model
-is fitted for each stratification. The value of strata can not change in each
-individual.</p></dd>
+is fitted for each combination of values. For example,
+<code>list("sex", c("sex", "age_group"))</code> requests models by sex and by sex and
+age group jointly. An unstratified model is always included. Each column
+must be constant within a person across all cohort records. Missing values
+are labelled <code>"Missing"</code>.</p></dd>
 
 </dl></div>
 

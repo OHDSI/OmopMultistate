@@ -10,12 +10,12 @@
 Source:
 [`DESCRIPTION`](https://github.com/oxford-pharmacoepi/OmopMultistate/blob/main/DESCRIPTION)
 
-Català M (2026). *OmopMultistate: What the Package Does (One Line, Title
-Case)*. R package version 0.1.0,
+Català M (2026). *OmopMultistate: Multi-State Analyses Using the OMOP
+Common Data Model*. R package version 0.1.0,
 <https://oxford-pharmacoepi.github.io/OmopMultistate/>.
 
     @Manual{,
-      title = {OmopMultistate: What the Package Does (One Line, Title Case)},
+      title = {OmopMultistate: Multi-State Analyses Using the OMOP Common Data Model},
       author = {Martí Català},
       year = {2026},
       note = {R package version 0.1.0},

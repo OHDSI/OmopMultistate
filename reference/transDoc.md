@@ -13,4 +13,8 @@ Helper for consistent documentation of `trans`.
   model, NA otherwise. In particular, all diagonal elements should be
   NA. The integers indicating the possible transitions in the
   multi-state model should be sequentially numbered, 1,...,K, with K the
-  number of transitions.
+  number of transitions. Row and column names must be identical, unique
+  state names in the same order. A row containing only `NA` defines an
+  absorbing state. Use
+  [`transMat()`](https://rdrr.io/pkg/mstate/man/transMat.html) to build
+  a matrix.

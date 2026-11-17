@@ -43,7 +43,9 @@
 <dl><dt id="arg-statehierarchy">stateHierarchy<a class="anchor" aria-label="anchor" href="#arg-statehierarchy"></a></dt>
 <dd><p>Character vector of state names in the order used to
 resolve states that occur on the same date, with earlier entries occurring
-first. An empty character vector applies no hierarchy.</p></dd>
+first. An empty character vector applies no hierarchy; unresolved ties
+between competing states cause an error. Include all states that need a
+distinct order. Unlisted states share the priority of the last listed state.</p></dd>
 
 </dl></div>
 
