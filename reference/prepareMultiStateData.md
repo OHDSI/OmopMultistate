@@ -67,8 +67,9 @@ prepareMultistateData(
 - stateStep:
 
   Numeric increment used to separate states that occur on the same date
-  according to `stateHierarchy`, in days. Successive priority ranks are
-  shifted by multiples of this increment. The default is `0.01` days.
+  according to `stateHierarchy`, in days. Must be finite and strictly
+  positive. Successive priority ranks are shifted by multiples of this
+  increment. The default is `0.01` days.
 
 ## Value
 
@@ -108,7 +109,7 @@ State records are collected into R for processing, including when
 
 ## See also
 
-[`summariseMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md),
+[`summariseMultistateProbabilities()`](https://ohdsi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md),
 [`transMat()`](https://rdrr.io/pkg/mstate/man/transMat.html)
 
 ## Examples

@@ -1,7 +1,7 @@
 # Plot Multi-State Occupation Probabilities
 
 Display the probabilities from
-[`summariseMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md)
+[`summariseMultistateProbabilities()`](https://ohdsi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md)
 as stacked step areas, with state occupation shown as percentages.
 
 ## Usage
@@ -15,7 +15,7 @@ plotMultistateProbabilities(result, style = NULL, timeScale = "days")
 - result:
 
   A `summarised_result` object produced by
-  [`summariseMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md).
+  [`summariseMultistateProbabilities()`](https://ohdsi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md).
 
 - style:
 
@@ -52,7 +52,7 @@ and `scales`.
 
 ## See also
 
-[`summariseMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md),
+[`summariseMultistateProbabilities()`](https://ohdsi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md),
 [`filterGroup()`](https://darwin-eu.github.io/omopgenerics/reference/filterGroup.html),
 [`filterStrata()`](https://darwin-eu.github.io/omopgenerics/reference/filterStrata.html),
 [`visOmopResults::themeVisOmop()`](https://darwin-eu.github.io/visOmopResults/reference/themeVisOmop.html)

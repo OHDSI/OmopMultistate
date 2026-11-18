@@ -27,8 +27,8 @@ Model](https://ohdsi.github.io/Tidy-R-programming-with-OMOP/) book.
 
 | Source | Driver | CDM reference | Status |
 |----|----|----|----|
-| Local R data frame | N/A | [`omopgenerics::cdmFromTables()`](https://darwin-eu.github.io/omopgenerics/reference/cdmFromTables.html) | [![](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=local-omopgenerics)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
-| In-memory DuckDB database | duckdb | [`CDMConnector::cdmFromCon()`](https://darwin-eu.github.io/CDMConnector/reference/cdmFromCon.html) | [![](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=duckdb-CDMConnector)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
+| Local R data frame | N/A | [`omopgenerics::cdmFromTables()`](https://darwin-eu.github.io/omopgenerics/reference/cdmFromTables.html) | [![Local data-frame test status](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=local-omopgenerics)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
+| In-memory DuckDB database | duckdb | [`CDMConnector::cdmFromCon()`](https://darwin-eu.github.io/CDMConnector/reference/cdmFromCon.html) | [![DuckDB test status](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=duckdb-CDMConnector)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
 
 ## Installation
 
@@ -196,7 +196,7 @@ the observed transition; other possible transitions in the interval have
 `status = 0`.
 
 To estimate state occupation probabilities, use
-[`summariseMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md).
+[`summariseMultistateProbabilities()`](https://ohdsi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md).
 Its `followUpDays` argument limits the time points returned after
 fitting; use `censorDate` to change the input follow-up endpoint.
 
@@ -255,7 +255,9 @@ result |>
   plotMultistateProbabilities()
 ```
 
-![](reference/figures/README-plot-probabilities-1.png)
+![Stacked state occupation probabilities over time for people initially
+receiving acetaminophen, showing treatment, discontinuation, and
+death.](reference/figures/README-plot-probabilities-1.png)
 
 ## Stratification
 
@@ -302,6 +304,6 @@ rows.
 
 Filtering with `filterStrata(sex == "overall")` selects the unstratified
 model. Passing several strata to
-[`plotMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/plotMultistateProbabilities.md)
+[`plotMultistateProbabilities()`](https://ohdsi.github.io/OmopMultistate/reference/plotMultistateProbabilities.md)
 creates separate panels; `timeScale = "years"` converts the x-axis from
 days to years.

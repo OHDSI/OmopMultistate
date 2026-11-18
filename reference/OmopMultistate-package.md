@@ -12,23 +12,22 @@ standard 'omopgenerics' summarised results.
 Start with a cohort table containing one cohort per state and use
 [`transMat()`](https://rdrr.io/pkg/mstate/man/transMat.html) to define
 the permitted transitions. Prepare data for other models with
-[`prepareMultistateData()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/prepareMultiStateData.md),
+[`prepareMultistateData()`](https://ohdsi.github.io/OmopMultistate/reference/prepareMultiStateData.md),
 or estimate state occupation probabilities with
-[`summariseMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md).
+[`summariseMultistateProbabilities()`](https://ohdsi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md).
 Use [`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
 [`settings()`](https://darwin-eu.github.io/omopgenerics/reference/settings.html)
 to inspect results and
-[`plotMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/plotMultistateProbabilities.md)
+[`plotMultistateProbabilities()`](https://ohdsi.github.io/OmopMultistate/reference/plotMultistateProbabilities.md)
 to plot them.
 
 ## See also
 
 Useful links:
 
-- <https://oxford-pharmacoepi.github.io/OmopMultistate/>
+- <https://ohdsi.github.io/OmopMultistate/>
 
-- Report bugs at
-  <https://github.com/oxford-pharmacoepi/OmopMultistate/issues>
+- Report bugs at <https://github.com/OHDSI/OmopMultistate/issues>
 
 ## Author
 

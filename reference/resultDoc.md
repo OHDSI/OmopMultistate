@@ -7,4 +7,4 @@ Helper for consistent documentation of `result`.
 - result:
 
   A `summarised_result` object produced by
-  [`summariseMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md).
+  [`summariseMultistateProbabilities()`](https://ohdsi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md).

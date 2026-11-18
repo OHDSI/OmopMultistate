@@ -2,9 +2,9 @@
 
 ## All functions
 
-- [`plotMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/plotMultistateProbabilities.md)
+- [`plotMultistateProbabilities()`](https://ohdsi.github.io/OmopMultistate/reference/plotMultistateProbabilities.md)
   : Plot Multi-State Occupation Probabilities
-- [`prepareMultistateData()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/prepareMultiStateData.md)
+- [`prepareMultistateData()`](https://ohdsi.github.io/OmopMultistate/reference/prepareMultiStateData.md)
   : Prepare Multi-State Data from an OMOP Cohort Table
-- [`summariseMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md)
+- [`summariseMultistateProbabilities()`](https://ohdsi.github.io/OmopMultistate/reference/summariseMultistateProbabilities.md)
   : Summarise Multi-State Occupation Probabilities over time

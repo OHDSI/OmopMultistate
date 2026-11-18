@@ -1,10 +1,10 @@
 # Summarise Multi-State Occupation Probabilities over time
 
 Prepare state transitions with
-[`prepareMultistateData()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/prepareMultiStateData.md),
+[`prepareMultistateData()`](https://ohdsi.github.io/OmopMultistate/reference/prepareMultiStateData.md),
 estimate state occupation probabilities, and return a standard
 `summarised_result` for inspection or plotting with
-[`plotMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/plotMultistateProbabilities.md).
+[`plotMultistateProbabilities()`](https://ohdsi.github.io/OmopMultistate/reference/plotMultistateProbabilities.md).
 
 ## Usage
 
@@ -55,8 +55,8 @@ summariseMultistateProbabilities(
 
 - followUpDays:
 
-  Maximum number of days of follow-up for which to estimate state
-  occupation probabilities. Use `Inf` to include all available
+  Non-negative maximum number of days of follow-up for which to estimate
+  state occupation probabilities. Use `Inf` to include all available
   follow-up. This limits the time points returned after model fitting;
   it does not censor the input data or refit the model at this horizon.
 
@@ -89,8 +89,9 @@ summariseMultistateProbabilities(
 - stateStep:
 
   Numeric increment used to separate states that occur on the same date
-  according to `stateHierarchy`, in days. Successive priority ranks are
-  shifted by multiples of this increment. The default is `0.01` days.
+  according to `stateHierarchy`, in days. Must be finite and strictly
+  positive. Successive priority ranks are shifted by multiples of this
+  increment. The default is `0.01` days.
 
 ## Value
 
@@ -126,7 +127,7 @@ and Breslow handling of tied event times.
 [`mstate::probtrans()`](https://rdrr.io/pkg/mstate/man/probtrans.html)
 then estimate state occupation probabilities from time zero. Time zero,
 censoring, and exclusions follow
-[`prepareMultistateData()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/prepareMultiStateData.md).
+[`prepareMultistateData()`](https://ohdsi.github.io/OmopMultistate/reference/prepareMultiStateData.md).
 
 Results are provided conditional on each initial state, together with an
 overall estimate weighted by the observed distribution of initial states
@@ -142,8 +143,8 @@ result.
 
 ## See also
 
-[`prepareMultistateData()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/prepareMultiStateData.md),
-[`plotMultistateProbabilities()`](https://oxford-pharmacoepi.github.io/OmopMultistate/reference/plotMultistateProbabilities.md),
+[`prepareMultistateData()`](https://ohdsi.github.io/OmopMultistate/reference/prepareMultiStateData.md),
+[`plotMultistateProbabilities()`](https://ohdsi.github.io/OmopMultistate/reference/plotMultistateProbabilities.md),
 [`filterGroup()`](https://darwin-eu.github.io/omopgenerics/reference/filterGroup.html),
 [`filterStrata()`](https://darwin-eu.github.io/omopgenerics/reference/filterStrata.html)
 

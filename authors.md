@@ -8,16 +8,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/oxford-pharmacoepi/OmopMultistate/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/OHDSI/OmopMultistate/blob/main/DESCRIPTION)
 
 Català M (2026). *OmopMultistate: Multi-State Analyses Using the OMOP
 Common Data Model*. R package version 0.1.0,
-<https://oxford-pharmacoepi.github.io/OmopMultistate/>.
+<https://ohdsi.github.io/OmopMultistate/>.
 
     @Manual{,
       title = {OmopMultistate: Multi-State Analyses Using the OMOP Common Data Model},
       author = {Martí Català},
       year = {2026},
       note = {R package version 0.1.0},
-      url = {https://oxford-pharmacoepi.github.io/OmopMultistate/},
+      url = {https://ohdsi.github.io/OmopMultistate/},
     }
