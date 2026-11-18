@@ -170,7 +170,9 @@ summariseMultistateProbabilities <- function(cohort,
               probability = numeric(),
               initial_state = character()
             ) |>
-              dplyr::cross_join(strataValues))
+              dplyr::cross_join(
+                strataData[0, setdiff(names(strataData), "subject_id"), drop = FALSE]
+              ))
           }
           strataLabel <- if (length(st) == 0) {
             "overall"
