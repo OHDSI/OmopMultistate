@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# OmopMultistate <img src="man/figures/logo.png" align="right" height="126" alt="OmopMultistate package logo" />
+# OmopMultistate <a href="https://oxford-pharmacoepi.github.io/OmopMultistate/"><img src="man/figures/logo.png" align="right" height="136" alt="OmopMultistate website" /></a>
 
 <!-- badges: start -->
 
