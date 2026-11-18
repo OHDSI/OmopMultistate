@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# OmopMultistate <img src="man/figures/logo.png" align="right" height="126" alt="" />
+# OmopMultistate <a href="https://ohdsi.github.io/OmopMultistate/"><img src="man/figures/logo.png" align="right" height="136" alt="OmopMultistate website" /></a>
 
 <!-- badges: start -->
 
@@ -39,8 +39,8 @@ Model](https://ohdsi.github.io/Tidy-R-programming-with-OMOP/) book.
 
 | Source | Driver | CDM reference | Status |
 |----|----|----|----|
-| Local R data frame | N/A | `omopgenerics::cdmFromTables()` | [![](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=local-omopgenerics)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
-| In-memory DuckDB database | duckdb | `CDMConnector::cdmFromCon()` | [![](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=duckdb-CDMConnector)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
+| Local R data frame | N/A | `omopgenerics::cdmFromTables()` | [![Local data-frame test status](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=local-omopgenerics)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
+| In-memory DuckDB database | duckdb | `CDMConnector::cdmFromCon()` | [![DuckDB test status](https://img.shields.io/github/actions/workflow/status/OHDSI/OmopMultistate/test-regular.yaml?branch=main&job=duckdb-CDMConnector)](https://github.com/OHDSI/OmopMultistate/actions/workflows/test-regular.yaml) |
 
 ## Installation
 
@@ -257,7 +257,7 @@ result |>
   plotMultistateProbabilities()
 ```
 
-<img src="man/figures/README-plot-probabilities-1.png" alt="" width="100%" />
+<img src="man/figures/README-plot-probabilities-1.png" alt="Stacked state occupation probabilities over time for people initially receiving acetaminophen, showing treatment, discontinuation, and death." width="100%" />
 
 ## Stratification
 

@@ -1,9 +1,11 @@
 ^OmopMultistate\.Rproj$
 ^\.Rproj\.user$
 ^README\.Rmd$
+^README\.html$
+^cran-comments\.md$
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
 ^\.github$
 ^LICENSE\.md$
-extra
+^extra$

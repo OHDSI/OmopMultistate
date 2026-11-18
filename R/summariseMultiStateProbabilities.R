@@ -125,6 +125,7 @@ summariseMultistateProbabilities <- function(cohort,
   # initial checks
   cohort <- omopgenerics::validateCohortArgument(cohort = cohort)
   strata <- omopgenerics::validateStrataArgument(strata = strata, table = cohort)
+  omopgenerics::assertNumeric(followUpDays, length = 1, min = 0)
   cols <- c(
     omopgenerics::cohortColumns(table = "cohort"), eventDate, censorDate,
     unlist(strata)
@@ -169,7 +170,9 @@ summariseMultistateProbabilities <- function(cohort,
               probability = numeric(),
               initial_state = character()
             ) |>
-              dplyr::cross_join(strataValues))
+              dplyr::cross_join(
+                strataData[0, setdiff(names(strataData), "subject_id"), drop = FALSE]
+              ))
           }
           strataLabel <- if (length(st) == 0) {
             "overall"

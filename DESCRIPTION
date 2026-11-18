@@ -13,33 +13,38 @@ Description: Prepare cohort records from the Observational Medical Outcomes
     standard 'omopgenerics' summarised results.
 License: Apache License (>= 2)
 Encoding: UTF-8
+Language: en-GB
+Depends: R (>= 4.1.0)
 Roxygen: list(markdown = TRUE)
 Imports: 
     cli,
     clock,
-    dplyr,
+    dplyr (>= 1.1.1),
     mstate,
     omopgenerics (>= 1.4.0),
     PatientProfiles,
     purrr,
     rlang,
     stringr,
-    survival,
+    survival (>= 3.8-1),
     tidyr
-URL: https://oxford-pharmacoepi.github.io/OmopMultistate/
-BugReports: https://github.com/oxford-pharmacoepi/OmopMultistate/issues
+URL: https://ohdsi.github.io/OmopMultistate/
+BugReports: https://github.com/OHDSI/OmopMultistate/issues
 Suggests: 
     CDMConnector,
     CohortConstructor,
     DBI,
     duckdb,
     ggplot2,
+    knitr,
     odbc,
     omock,
     RPostgres,
+    rmarkdown,
     scales,
     testthat (>= 3.0.0),
     visOmopResults
+VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/testthat/parallel: true
 Config/roxygen2/version: 8.1.0

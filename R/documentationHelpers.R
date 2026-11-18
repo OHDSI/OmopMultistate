@@ -65,8 +65,9 @@ NULL
 #' Helper for consistent documentation of `stateStep`.
 #'
 #' @param stateStep Numeric increment used to separate states that occur on the
-#' same date according to `stateHierarchy`, in days. Successive priority ranks
-#' are shifted by multiples of this increment. The default is `0.01` days.
+#' same date according to `stateHierarchy`, in days. Must be finite and strictly
+#' positive. Successive priority ranks are shifted by multiples of this
+#' increment. The default is `0.01` days.
 #'
 #' @name stateStepDoc
 #' @keywords internal
@@ -88,8 +89,8 @@ NULL
 
 #' Helper for consistent documentation of `followUpDays`.
 #'
-#' @param followUpDays Maximum number of days of follow-up for which to estimate
-#' state occupation probabilities. Use `Inf` to include all available
+#' @param followUpDays Non-negative maximum number of days of follow-up for
+#' which to estimate state occupation probabilities. Use `Inf` to include all available
 #' follow-up. This limits the time points returned after model fitting; it
 #' does not censor the input data or refit the model at this horizon.
 #'
