@@ -37,6 +37,7 @@ Plotting requires the suggested packages \code{visOmopResults}, \code{ggplot2}, 
 \code{scales}.
 }
 \examples{
+\donttest{
 library(CohortConstructor)
 library(dplyr)
 library(omock)
@@ -92,6 +93,7 @@ result |>
   plotMultistateProbabilities(timeScale = "years")
 
 cdmDisconnect(cdm)
+}
 
 }
 \seealso{

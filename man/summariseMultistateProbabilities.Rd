@@ -106,6 +106,7 @@ restricted to \code{followUpDays}. A row at exactly \code{followUpDays} is not
 guaranteed. Confidence intervals are not included in the returned result.
 }
 \examples{
+\donttest{
 library(CohortConstructor)
 library(dplyr)
 library(omock)
@@ -167,6 +168,7 @@ bySex |>
   head()
 
 cdmDisconnect(cdm)
+}
 
 }
 \seealso{

@@ -88,6 +88,7 @@ State records are collected into R for processing, including when \code{cohort}
 is stored in a database.
 }
 \examples{
+\donttest{
 library(CohortConstructor)
 library(dplyr)
 library(omock)
@@ -137,6 +138,7 @@ msData |>
   head()
 
 cdmDisconnect(cdm)
+}
 
 }
 \seealso{
