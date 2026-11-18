@@ -132,8 +132,11 @@ prepareMultistateData <- function(cohort,
   }
 
   # check states hierarchy
-  omopgenerics::assertChoice(stateHierarchy, choices = states)
-  omopgenerics::assertNumeric(stateStep, length = 1)
+  omopgenerics::assertChoice(stateHierarchy, choices = states, unique = TRUE)
+  omopgenerics::assertNumeric(stateStep, length = 1, min = 0)
+  if (stateStep == 0) {
+    cli::cli_abort("{.arg stateStep} must be strictly positive.")
+  }
 
   # states hierarchy
   stateHierarchy <- dplyr::tibble(state = stateHierarchy) |>

@@ -37,8 +37,8 @@ age group jointly. An unstratified model is always included. Each column
 must be constant within a person across all cohort records. Missing values
 are labelled \code{"Missing"}.}
 
-\item{followUpDays}{Maximum number of days of follow-up for which to estimate
-state occupation probabilities. Use \code{Inf} to include all available
+\item{followUpDays}{Non-negative maximum number of days of follow-up for
+which to estimate state occupation probabilities. Use \code{Inf} to include all available
 follow-up. This limits the time points returned after model fitting; it
 does not censor the input data or refit the model at this horizon.}
 
@@ -62,8 +62,9 @@ between competing states cause an error. Include all states that need a
 distinct order. Unlisted states share the priority of the last listed state.}
 
 \item{stateStep}{Numeric increment used to separate states that occur on the
-same date according to \code{stateHierarchy}, in days. Successive priority ranks
-are shifted by multiples of this increment. The default is \code{0.01} days.}
+same date according to \code{stateHierarchy}, in days. Must be finite and strictly
+positive. Successive priority ranks are shifted by multiples of this
+increment. The default is \code{0.01} days.}
 }
 \value{
 A \code{summarised_result} with result type

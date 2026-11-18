@@ -1,4 +1,6 @@
 test_that("prepareMultistateData validates states and optional arguments", {
+  skip_if_not_installed("omock")
+  skip_if_not_installed("CohortConstructor")
   cdm <- omock::mockCdmFromTables(tables = list(
     cohort = dplyr::tibble(
       cohort_definition_id = c(1L, 2L, 3L),
@@ -27,6 +29,13 @@ test_that("prepareMultistateData validates states and optional arguments", {
     prepareMultistateData(cdm$cohort, missingState),
     "missing"
   )
+  for (step in list(0, -0.1, Inf, NA_real_, numeric(), c(0.01, 0.1))) {
+    expect_error(prepareMultistateData(cdm$cohort, trans, stateStep = step), "stateStep")
+  }
+  expect_error(
+    prepareMultistateData(cdm$cohort, trans, stateHierarchy = c("treated", "treated")),
+    "stateHierarchy"
+  )
 
   expect_no_error(
     msdata <- prepareMultistateData(
@@ -42,6 +51,8 @@ test_that("prepareMultistateData validates states and optional arguments", {
 })
 
 test_that("censorDate can refer to a column named censor_date", {
+  skip_if_not_installed("omock")
+  skip_if_not_installed("CohortConstructor")
   cdm <- omock::mockCdmFromTables(tables = list(
     cohort = dplyr::tibble(
       cohort_definition_id = c(1L, 2L, 1L, 2L, 1L, 1L),
@@ -90,6 +101,8 @@ test_that("censorDate can refer to a column named censor_date", {
 })
 
 test_that("excluding all subjects with no follow-up returns empty multistate data", {
+  skip_if_not_installed("omock")
+  skip_if_not_installed("CohortConstructor")
   cdm <- omock::mockCdmFromTables(tables = list(
     cohort = dplyr::tibble(
       cohort_definition_id = 1:2,
@@ -137,6 +150,19 @@ test_that("excluding all subjects with no follow-up returns empty multistate dat
   )
   expect_equal(nrow(result), 0L)
   expect_equal(nrow(attr(result, "ms_data")), 0L)
+
+  cdm$cohort <- dplyr::mutate(cdm$cohort, sex = "Female")
+  expect_no_warning(
+    expect_message(
+      stratified <- summariseMultistateProbabilities(
+        cdm$cohort, trans, strata = list("sex")
+      ),
+      "2 records excluded: subject has no follow-up after index date"
+    )
+  )
+  expect_s3_class(stratified, "summarised_result")
+  expect_equal(nrow(stratified), 0L)
+  expect_named(attr(stratified, "ms_data"), c(names(msdata), "sex"))
 })
 
 test_that("preparation helpers report and reject conflicting states", {
@@ -158,6 +184,8 @@ test_that("preparation helpers report and reject conflicting states", {
 })
 
 test_that("events on the censor date are retained", {
+  skip_if_not_installed("omock")
+  skip_if_not_installed("CohortConstructor")
   cdm <- omock::mockCdmFromTables(tables = list(
     cohort = dplyr::tibble(
       cohort_definition_id = c(1L, 2L, 3L, 3L),

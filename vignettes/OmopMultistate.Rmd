@@ -22,12 +22,12 @@ options(tibble.width = 80)
 ```
 
 OmopMultistate models movement between states represented by OMOP CDM cohorts.
-You create the cohorts (states) and define when people enters in the state 
+You create the cohorts (states) and define when people enter each state 
 (usually `cohort_start_date`) and then you provide which transitions are
 possible.
 The package prepares the data, estimates state occupation probabilities,
 and returns results that can be inspected, filtered, and plotted. Further
-methods can be used as the output is an `ms_data` object that can be further
+methods can be used as the output is an `msdata` object that can be further
 used for modelling.
 
 | Function | Purpose |
@@ -43,7 +43,7 @@ The examples below use invented histories stored in local data frames. They
 require no data download or database connection as they use synthetic data
 provided by the [omock](https://ohdsi.github.io/omock/) package. For an existing OMOP CDM,
 provide a `cohort_table` with the same structure, for example one created with
-[CohortConstructor](https://ohdsi.github.io/CohortConstructor). State records are collected into R for processing.
+[CohortConstructor](https://ohdsi.github.io/CohortConstructor/). State records are collected into R for processing.
 
 ```{r libraries, message=FALSE}
 library(OmopMultistate)

@@ -125,6 +125,7 @@ summariseMultistateProbabilities <- function(cohort,
   # initial checks
   cohort <- omopgenerics::validateCohortArgument(cohort = cohort)
   strata <- omopgenerics::validateStrataArgument(strata = strata, table = cohort)
+  omopgenerics::assertNumeric(followUpDays, length = 1, min = 0)
   cols <- c(
     omopgenerics::cohortColumns(table = "cohort"), eventDate, censorDate,
     unlist(strata)
