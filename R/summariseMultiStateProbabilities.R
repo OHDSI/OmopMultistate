@@ -52,6 +52,7 @@
 #' @export
 #'
 #' @examples
+#' \donttest{
 #' library(CohortConstructor)
 #' library(dplyr)
 #' library(omock)
@@ -113,6 +114,7 @@
 #'   head()
 #'
 #' cdmDisconnect(cdm)
+#' }
 #'
 summariseMultistateProbabilities <- function(cohort,
                                              trans,
@@ -374,6 +376,7 @@ addTransToSettings <- function(x, trans) {
 #' @export
 #'
 #' @examples
+#' \donttest{
 #' library(CohortConstructor)
 #' library(dplyr)
 #' library(omock)
@@ -429,6 +432,7 @@ addTransToSettings <- function(x, trans) {
 #'   plotMultistateProbabilities(timeScale = "years")
 #'
 #' cdmDisconnect(cdm)
+#' }
 #'
 plotMultistateProbabilities <- function(result,
                                         style = NULL,

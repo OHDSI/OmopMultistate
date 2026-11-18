@@ -47,6 +47,7 @@
 #' @export
 #'
 #' @examples
+#' \donttest{
 #' library(CohortConstructor)
 #' library(dplyr)
 #' library(omock)
@@ -96,6 +97,7 @@
 #'   head()
 #'
 #' cdmDisconnect(cdm)
+#' }
 #'
 prepareMultistateData <- function(cohort,
                                   trans,
